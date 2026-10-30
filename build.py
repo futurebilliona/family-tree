@@ -67,6 +67,7 @@ head = '''<!doctype html>
 <meta name="theme-color" content="#0E3B2C">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%230E3B2C'/%3E%3Cg fill='none' stroke='%23E5C16C' stroke-width='2.6'%3E%3Crect x='14' y='14' width='20' height='20'/%3E%3Crect x='14' y='14' width='20' height='20' transform='rotate(45 24 24)'/%3E%3Ccircle cx='24' cy='24' r='4'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preload" href="/fonts/alegreya-800.woff" as="font" type="font/woff" crossorigin>
+<script>(function(){try{var v=localStorage.getItem("shajara.theme");if(v!=="dark"&&v!=="light")v=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=v}catch(e){}})()</script>
 <style>:root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
