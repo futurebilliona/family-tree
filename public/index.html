@@ -498,6 +498,17 @@ body{background:radial-gradient(900px 620px at 0% 0%,rgba(60,170,120,.3),transpa
 #addBtn{background:linear-gradient(135deg,#1A6A4F,#0E3B2C);border-color:transparent;color:#fff;box-shadow:0 12px 24px -12px rgba(14,59,44,.95)}
 #addBtn:hover{color:#fff;filter:brightness(1.15)}
 #zFit{box-shadow:inset 0 0 0 2px var(--green);color:var(--green)}
+/* lineage focus, branch toggles, in-law jump */
+.card{transition:box-shadow .3s var(--ease),transform .3s var(--ease),opacity .45s,filter .45s}
+.card.dim{opacity:.34;filter:saturate(.45)}
+.card.anc{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 40%,transparent),0 16px 30px -18px rgba(50,36,10,.7)}
+.stage.focus .links .ln,.stage.focus .links .ring{opacity:.35}
+.links .hl{fill:none;stroke:#F2B52E;stroke-width:5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0;filter:drop-shadow(0 0 6px rgba(242,181,46,.9));animation:draw .9s var(--ease) both}
+.tog{position:absolute;z-index:3;transform:translate(-50%,-50%);min-width:26px;height:26px;padding:0 7px;border-radius:999px;border:2px solid #C99637;background:#FFF8E6;color:#7A5410;font:700 13px/1 var(--sans);display:grid;place-items:center;box-shadow:0 4px 10px -3px rgba(60,40,10,.5);transition:transform .2s var(--ease),background .2s}
+.tog:hover{transform:translate(-50%,-50%) scale(1.18);background:#F6E3A6}
+.tog.fold{background:linear-gradient(180deg,#F6E6B0,#E0B65C);animation:ping 2.2s ease-out infinite}
+.upb{position:absolute;z-index:3;width:26px;height:26px;border-radius:50%;border:2px solid var(--green);background:var(--card);color:var(--green);display:grid;place-items:center;box-shadow:0 4px 10px -3px rgba(0,0,0,.4);transition:transform .2s var(--ease),background .2s,color .2s}
+.upb:hover{transform:scale(1.2);background:var(--green);color:#fff}
 @keyframes fly{from{transform:translateX(0)}to{transform:translateX(calc(100vw + 120px))}}
 @keyframes flap{from{transform:scaleY(1)}to{transform:scaleY(.35)}}
 
@@ -745,6 +756,7 @@ body{background:radial-gradient(900px 620px at 0% 0%,rgba(60,170,120,.3),transpa
         <div class="results" id="results" hidden></div>
       </div>
       <label class="field-inline pill" id="pickWrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="#star" width="24" height="24"/></svg><span id="pickLbl"></span><select class="sel" id="pick"></select></label>
+      <label class="field-inline pill" id="genWrap" hidden><span data-t="genLbl2"></span><select class="sel" id="genSel" aria-label="Avlodlar"></select></label>
       <div class="zoom pill" id="zoom">
         <button id="zOut" aria-label="Kichiklashtirish"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/></svg></button>
         <output id="zPct">100%</output>
@@ -1085,6 +1097,7 @@ function layoutTree(rootId, o){
     const right = sps.filter((_, i) => i % 2 === 0), left = sps.filter((_, i) => i % 2 === 1).reverse();
     const row = [...left.map(s => ({ id:s.id, inLaw:true })), { id, inLaw:false }, ...right.map(s => ({ id:s.id, inLaw:true }))];
     const spSet = new Set(sps.map(s => s.id)), kidsP = kidsOf(id);
+    const stop = S.collapsed.has(id) || (S.maxGen > 0 && (o.dep0 || 0) + dep + 1 >= S.maxGen); let total = 0;
     const other = (k, of) => k.fatherId === of ? k.motherId : k.fatherId;
     const defs = [...left.map(s => s.id), null, ...right.map(s => s.id)];
     const groups = [];
@@ -1096,13 +1109,13 @@ function layoutTree(rootId, o){
         ks = [...m.values()].sort((a,b) => bKey(a) - bKey(b));
       } else ks = kidsP.filter(k => { const oo = other(k, id); return !oo || !spSet.has(oo); });
       const children = [];
-      for (const k of ks) if (!seen.has(k.id)) children.push(build(k.id, dep + 1));
+      for (const k of ks) if (!seen.has(k.id)){ total++; if (!stop) children.push(build(k.id, dep + 1)); }
       groups.push({ sid, children });
     }
     const rowW = row.length * o.w + (row.length - 1) * o.coupleGap;
     const ne = groups.filter(g => g.children.length);
     let childW = 0; ne.forEach((g, gi) => { g.children.forEach((c, i) => childW += c.w + (i ? o.gap : 0)); if (gi) childW += groupGap; });
-    return { id, row, pIdx:left.length, groups, rowW, childW, w:Math.max(rowW, childW), dep };
+    return { id, row, pIdx:left.length, groups, rowW, childW, w:Math.max(rowW, childW), dep, total, stop };
   }
   if (!P(rootId)) return { nodes, marriages, families, W:0, H:0, maxDepth:0 };
   const tree = build(rootId, 0); let maxDepth = 0;
@@ -1110,7 +1123,7 @@ function layoutTree(rootId, o){
     const y = tn.dep * (o.h + o.rowGap); maxDepth = Math.max(maxDepth, tn.dep);
     const cx = x0 + tn.w / 2, rx = cx - tn.rowW / 2;
     const xs = tn.row.map((_, i) => rx + i * (o.w + o.coupleGap));
-    tn.row.forEach((c, i) => nodes.push({ id:c.id, x:xs[i], y, inLaw:c.inLaw, depth:tn.dep }));
+    tn.row.forEach((c, i) => nodes.push({ id:c.id, x:xs[i], y, inLaw:c.inLaw, depth:tn.dep, total:c.inLaw ? 0 : tn.total, folded:!c.inLaw && tn.stop && tn.total > 0 }));
     const px = xs[tn.pIdx];
     const ne = tn.groups.filter(g => g.children.length);
     let cxp = cx - tn.childW / 2;
@@ -1128,7 +1141,7 @@ function layoutTree(rootId, o){
       const busY = y + o.h + o.rowGap * 0.5 + off, kids = [];
       if (gi > 0) cxp += groupGap - o.gap;
       g.children.forEach(ch => { const kc = place(ch, cxp); kids.push({ x:kc, y:(tn.dep + 1) * (o.h + o.rowGap) }); cxp += ch.w + o.gap; });
-      families.push({ ax, ay, busY, kids });
+      families.push({ ax, ay, busY, kids, pid:tn.id, sid:g.sid, kidIds:g.children.map(c => c.id) });
     });
     return px + o.w / 2;
   }
@@ -1205,6 +1218,7 @@ const PZ = { x:0, y:0, k:1, vp:$("vp"), st:$("stage"), dragged:false,
 })();
 
 /* ================= Tree view ================= */
+S.collapsed = new Set(); S.maxGen = +store.get("shajara.maxgen") || 0;
 const TD = { w:166, h:196, coupleGap:62, gap:40, rowGap:100, knotY:62, busStep:10 };
 function unitKids(id){ const p = P(id), m = new Map(); if (!p) return []; for (const x of [p, ...spousesOf(p)]) for (const k of kidsOf(x.id)) m.set(k.id, k); return [...m.values()].sort((a,b) => bKey(a) - bKey(b)); }
 function treePages(){
@@ -1230,6 +1244,19 @@ function pageOfPerson(pages, id){
   for (let i = 0; i < pages.length; i++) for (const r of pages[i].ids){ if (layoutTree(r, TD).nodes.some(n => n.id === id)) return i; }
   return -1;
 }
+/* lineage focus: ancestors line up to the root, own descendants and spouses stay lit, the rest dims */
+function lineage(Lt){
+  const sel = P(S.selId); if (!sel) return null;
+  const inL = new Set(Lt.nodes.map(n => n.id)); if (!inL.has(sel.id)) return null;
+  const starts = new Set([sel.id]); for (const sp of spousesOf(sel)) if (inL.has(sp.id)) starts.add(sp.id);
+  const chain = new Set(), q = [...starts];
+  while (q.length){ const id = q.pop(); if (chain.has(id)) continue; chain.add(id); const x = P(id); if (!x) continue; for (const par of [x.fatherId, x.motherId]) if (par && inL.has(par)) q.push(par); }
+  const rel = new Set(chain), fams = new Set(), dq = [...starts];
+  while (dq.length){ const id = dq.pop(); fams.add(id); for (const k of kidsOf(id)) if (inL.has(k.id) && !rel.has(k.id)){ rel.add(k.id); dq.push(k.id); } }
+  for (const id of [...rel]) for (const sp of spousesOf(P(id))) if (inL.has(sp.id)) rel.add(sp.id);
+  for (const id of [...chain]) for (const sp of spousesOf(P(id))) if (inL.has(sp.id)) rel.add(sp.id);
+  return { chain, rel, starts, fams };
+}
 function renderTree(){
   if (!P(S.rootId)){ const f = founders()[0]; S.rootId = f ? f.id : null; }
   if (!S.rootId){ PZ.st.innerHTML = ""; return; }
@@ -1249,7 +1276,7 @@ function renderTree(){
   }
   $("pager").hidden = !S.paged || S.view !== "tree";
   const parts = []; let xoff = 0, maxD = 0;
-  for (const r of roots){ const L1 = layoutTree(r, TD); parts.push({ L1, dx: xoff }); xoff += L1.W + TD.gap * 3; maxD = Math.max(maxD, L1.maxDepth); }
+  for (const r of roots){ const L1 = layoutTree(r, { ...TD, dep0: depth0 }); parts.push({ L1, dx: xoff }); xoff += L1.W + TD.gap * 3; maxD = Math.max(maxD, L1.maxDepth); }
   const Lt = { W: Math.max(0, xoff - TD.gap * 3), H: (maxD + 1) * TD.h + maxD * TD.rowGap, maxDepth: maxD, nodes: [], families: [], marriages: [] };
   for (const { L1, dx } of parts){
     L1.nodes.forEach(n => Lt.nodes.push({ ...n, x: n.x + dx }));
@@ -1259,11 +1286,16 @@ function renderTree(){
   const padL = 60, pad = 76, W = Lt.W + padL + pad, H = Lt.H + pad * 2 + (S.paged ? 60 : 0);
   let svg = `<svg class="links" width="${W}" height="${H}" viewBox="${-padL} ${-pad} ${W} ${H}">`;
   for (const f of Lt.families) svg += `<path class="ln" d="${linkPath(f, 16)}"/>`;
+  const hl = lineage(Lt); let hlSvg = "";
+  if (hl){ for (const f of Lt.families){
+      const own = hl.fams.has(f.pid) && (f.pid === S.selId || f.sid === S.selId || hl.starts.has(f.pid) || hl.starts.has(f.sid));
+      const kids = own ? f.kids : f.kids.filter((_, i) => hl.chain.has(f.kidIds[i]));
+      if (kids.length) hlSvg += `<path class="hl" pathLength="1" d="${linkPath({ ...f, kids }, 16)}"/>`; } }
   for (const m of Lt.marriages){
     svg += `<path class="ln mar" d="M${m.x1} ${m.y}H${m.x2}"/>`;
     svg += `<circle class="ringbg" cx="${m.kx}" cy="${m.y}" r="13"/><circle class="ring" cx="${m.kx - 6}" cy="${m.y}" r="8"/><circle class="ring" cx="${m.kx + 6}" cy="${m.y}" r="8"/>`;
   }
-  svg += "</svg>";
+  svg += hlSvg + "</svg>";
   let gens = "";
   const depths = [...new Set(Lt.nodes.map(n => n.depth))];
   const anchor = Lt.nodes.find(n => roots.includes(n.id)), axis = roots.length === 1 && anchor ? anchor.x + TD.w / 2 + padL : Lt.W / 2 + padL;
@@ -1271,12 +1303,20 @@ function renderTree(){
   let cards = "";
   for (const n of Lt.nodes){
     const p = P(n.id), rel = relOf(n.id);
-    cards += `<button class="card ${p.gender === "f" ? "f" : "m"}${n.inLaw ? " in-law" : ""}${S.selId === p.id ? " sel" : ""}${S.meId === p.id ? " me" : ""}" data-id="${esc(p.id)}" style="left:${n.x + padL}px;top:${n.y + pad}px;width:${TD.w}px;height:${TD.h}px">
+    cards += `<button class="card ${p.gender === "f" ? "f" : "m"}${n.inLaw ? " in-law" : ""}${S.selId === p.id ? " sel" : ""}${S.meId === p.id ? " me" : ""}${hl ? (hl.rel.has(p.id) ? (hl.chain.has(p.id) ? " anc" : "") : " dim") : ""}" data-id="${esc(p.id)}" style="left:${n.x + padL}px;top:${n.y + pad}px;width:${TD.w}px;height:${TD.h}px">
       ${rel ? `<span class="rel" title="${esc(dn(rel.term))}">${esc(dn(rel.term))}</span>` : ""}
       ${avatar(p)}<span class="nm">${esc(first(p))}</span>${p.lastName ? `<span class="sn">${esc(dn(p.lastName))}</span>` : ""}<span class="yr">${yrs(p) ? "(" + esc(yrs(p)) + ")" : "&nbsp;"}</span></button>`;
   }
+  for (const n of Lt.nodes){
+    const cx = n.x + padL + TD.w / 2, p = P(n.id);
+    if (!n.inLaw && n.total > 0) cards += `<button class="tog${n.folded ? " fold" : ""}" data-tog="${esc(n.id)}" style="left:${cx}px;top:${n.y + pad + TD.h}px" aria-label="${esc(t(n.folded ? "tgOpen" : "tgFold"))}" title="${esc(t(n.folded ? "tgOpen" : "tgFold"))}">${n.folded ? "+" + descCount(n.id) : "−"}</button>`;
+    if (n.inLaw && (P(p.fatherId) || P(p.motherId))) cards += `<button class="upb" data-up="${esc(n.id)}" style="left:${n.x + padL + TD.w - 14}px;top:${n.y + pad - 10}px" aria-label="${esc(t("tgUp"))}" title="${esc(t("tgUp"))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>`;
+  }
   PZ.st.style.width = W + "px"; PZ.st.style.height = H + "px";
+  PZ.st.classList.toggle("focus", !!hl);
   PZ.st.innerHTML = svg + gens + cards;
+  const gs = $("genSel"), totalG = depth(S.rootId);
+  if (gs){ gs.innerHTML = `<option value="0">${esc(t("genAll"))}</option>` + Array.from({ length: totalG }, (_, i) => `<option value="${i + 1}"${S.maxGen === i + 1 ? " selected" : ""}>${i + 1} ${esc(t("gen"))}</option>`).join(""); if (!S.maxGen) gs.value = "0"; }
   MINI.build(Lt, W, H, padL, pad);
 }
 
@@ -1388,7 +1428,7 @@ function evLabel(e){
 }
 function whenLabel(d){ return d === 0 ? t("today") : d === 1 ? t("tomorrow") : t("inDays", { n:d }); }
 /* ================= Pages: home · members · time machine · map · photo archive ================= */
-Object.assign(L, { viewHome:"Bosh sahifa", viewTime:"Tarixiy voqealar", viewMap:"Xarita", viewPhotos:"Fotoarxiv",
+Object.assign(L, { genLbl2:"Avlodlar", genAll:"Barcha avlod", tgFold:"Shoxni yig'ish", tgOpen:"Shoxni ochish", tgUp:"Ota-onasi tomoni — o'sha oila shajarasini ochish", viewHome:"Bosh sahifa", viewTime:"Tarixiy voqealar", viewMap:"Xarita", viewPhotos:"Fotoarxiv",
   heroEyebrow:"Oilaviy meros", heroT1:"Bizning", heroT2:"shajara tariximiz", heroP:"Ajdodlarimizni eslash, o'zligimizni anglash va kelajak avlodlarga meros qoldirish.", heroCta:"Shajara daraxtini ochish",
   hsPhotos:"Suratlar", hsPlaces:"Joylar", recent:"Oila a'zolari", recentSub:"yangi qo'shilganlar", seeAll:"Hammasi",
   fAll:"Hammasi", fM:"Erkaklar", fF:"Ayollar", fLive:"Tirik", fDead:"Marhum", mvCards:"Kartalar", mvTable:"Jadval", noRes:"Hech narsa topilmadi.",
@@ -1697,7 +1737,7 @@ var renderChrome = function(){
   if (S.view !== "tree"){ $("pager").hidden = true; $("pageMode").hidden = true; }
   $("menuDot").hidden = !(S.loaded && upcoming(0).length);
   $("zoom").hidden = PLAIN.has(S.view) || !n;
-  $("pickWrap").hidden = !n || PLAIN.has(S.view);
+  $("pickWrap").hidden = !n || PLAIN.has(S.view); $("genWrap").hidden = S.view !== "tree" || !n;
   $("pickLbl").textContent = t(S.view === "tree" ? "root" : "center");
   const list = S.view === "tree" ? founders() : [...S.people.values()].sort((a,b) => short(a).localeCompare(short(b)));
   const cur = S.view === "tree" ? S.rootId : S.focusId;
@@ -2357,6 +2397,10 @@ $("titleEditBtn").onclick = editTitle;
 PZ.st.addEventListener("click", e => {
   const add = e.target.closest("[data-add]");
   if (add){ addRelative(add.dataset.child, add.dataset.add); return; }
+  const tg = e.target.closest("[data-tog]");
+  if (tg){ const id = tg.dataset.tog; S.collapsed.has(id) ? S.collapsed.delete(id) : S.collapsed.add(id); render(true); return; }
+  const up = e.target.closest("[data-up]");
+  if (up){ const id = up.dataset.up; S.rootId = topOf(id); S.page = 0; S.selId = id; render(true); locate(id); return; }
   const el = e.target.closest("[data-id]"); if (!el) return;
   const id = el.dataset.id;
   if (S.view === "fan" && S.selId === id && id !== S.focusId){ S.focusId = id; render(true); return; }
@@ -2378,6 +2422,7 @@ $("vList").onclick = () => setView("list");
 $("vHome").onclick = () => setView("home"); $("vTime").onclick = () => setView("time"); $("vMap").onclick = () => setView("map"); $("vPhotos").onclick = () => setView("photos");
 $("scLat").onclick = () => { S.script = "lat"; store.set("shajara.script", "lat"); render(); };
 $("scCyr").onclick = () => { S.script = "cyr"; store.set("shajara.script", "cyr"); render(); };
+$("genSel").onchange = e => { S.maxGen = +e.target.value || 0; store.set("shajara.maxgen", S.maxGen ? String(S.maxGen) : null); S.page = 0; render(true); };
 $("pick").onchange = e => { if (S.view === "tree"){ S.rootId = e.target.value; S.page = 0; } else S.focusId = e.target.value; render(true); };
 $("addBtn").onclick = () => openForm(null, {});
 $("exportBtn").onclick = () => openExport("poster");
