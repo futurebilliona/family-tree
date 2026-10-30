@@ -407,41 +407,28 @@ tbody tr:hover td{background:var(--sunk)}
   --ease:cubic-bezier(.22,.9,.3,1);
 }
 @property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
-body{background:radial-gradient(900px 600px at 0% 0%,color-mix(in srgb,var(--gold) 10%,transparent),transparent 60%),var(--paper)}
 :focus-visible{box-shadow:0 0 0 5px color-mix(in srgb,var(--gold) 22%,transparent)}
 *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--gold) 45%,transparent) transparent}
 
-/* ---- emerald sidebar ---- */
-.side{position:relative;isolation:isolate;color:#EFE8D2;border:1px solid rgba(201,162,79,.38);border-radius:26px;
-  background:radial-gradient(120% 60% at 50% -10%,rgba(60,170,120,.28),transparent 60%),linear-gradient(175deg,var(--emerald),var(--emerald2));
-  box-shadow:0 26px 60px -28px rgba(4,30,20,.75),inset 0 1px 0 rgba(255,255,255,.1)}
-.side::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:var(--orn) 0 0/72px;opacity:.07;
-  -webkit-mask-image:linear-gradient(180deg,#000,transparent 75%);mask-image:linear-gradient(180deg,#000,transparent 75%)}
-.side .mark{color:#E5C16C;filter:drop-shadow(0 0 12px rgba(229,193,108,.55));animation:breathe 5s ease-in-out infinite}
-.brand h1{color:#FBF4DF;font-size:27px;letter-spacing:.005em}
-.brand p{color:#A8C2B4}
-.side .icon-btn{color:#A8C2B4}.side .icon-btn:hover{background:rgba(255,255,255,.1);color:#E5C16C}
-.nav button{position:relative;overflow:hidden;color:#D4E3DA;border-radius:14px;transition:background .25s,color .25s,transform .25s var(--ease)}
-.nav button svg{color:#8FB5A2;transition:color .25s,transform .35s var(--ease)}
-.nav button:hover{background:rgba(255,255,255,.08);color:#fff}
-.nav button:hover svg{color:#E5C16C;transform:scale(1.12) rotate(-4deg)}
-.nav button::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);transform:translateX(-120%);pointer-events:none}
+/* ---- ivory sidebar on an emerald frame ---- */
+html{background:#082A1F}
+body{background:radial-gradient(900px 620px at 0% 0%,rgba(60,170,120,.3),transparent 60%),linear-gradient(rgba(8,42,31,.92),rgba(8,42,31,.92)),var(--orn) 0 0/72px,#082A1F;background-attachment:fixed}
+.side{position:relative;isolation:isolate;border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line));border-radius:26px;background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 100%,#fff),var(--panel));box-shadow:0 26px 60px -28px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.8)}
+.side::before{content:"";position:absolute;left:0;right:0;bottom:0;height:48%;z-index:-1;border-radius:inherit;background:var(--orn) 0 100%/76px;opacity:.34;-webkit-mask-image:linear-gradient(0deg,#000,transparent);mask-image:linear-gradient(0deg,#000,transparent)}
+.side .mark{color:var(--green);animation:breathe 5s ease-in-out infinite}
+.brand h1{font-size:27px}
+.nav button{position:relative;overflow:hidden;border-radius:14px;transition:background .25s,color .25s,transform .25s var(--ease)}
+.nav button svg{transition:color .25s,transform .35s var(--ease)}
+.nav button:hover svg{color:var(--gold);transform:scale(1.12) rotate(-4deg)}
+.nav button::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);pointer-events:none}
 .nav button:hover::after{transform:translateX(120%);transition:transform .8s var(--ease)}
-.nav button[aria-pressed="true"]{background:linear-gradient(135deg,#2BAA70,#167A50);color:#fff;box-shadow:0 10px 26px -10px rgba(43,170,112,.9),inset 0 1px 0 rgba(255,255,255,.28)}
-.nav button[aria-pressed="true"] svg{color:#fff}
-.side .orn{color:#C9A24F}
-.side .statcard,.side .me-chip,.side .side-btn{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#EFE8D2;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.side .statcard svg{color:#E5C16C}
-.side .statcard small,.side .statcard span,.me-chip small{color:#A8C2B4}
-.statcard b{color:#fff}
-.side .me-chip:hover,.side .side-btn:hover{border-color:#E5C16C;color:#fff;box-shadow:0 0 22px -8px rgba(229,193,108,.7)}
-.side .me-chip .mc-ic{border-color:#E5C16C;color:#E5C16C}
-.side .seg{background:rgba(0,0,0,.28);border-color:rgba(255,255,255,.12)}
-.side .seg button{color:#A8C2B4}
-.side .seg button[aria-pressed="true"]{background:rgba(255,255,255,.16);color:#fff;box-shadow:none}
-.todaybtn{background:rgba(229,193,108,.14);border-color:rgba(229,193,108,.6);color:#F1D58C;transition:transform .25s var(--ease),box-shadow .25s}
-.todaybtn:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px rgba(229,193,108,.9)}
-.today-dot{background:#E5C16C;color:#2B1F05;animation:ping 2.2s ease-out infinite}
+.nav button[aria-pressed="true"]{background:linear-gradient(135deg,#1A6A4F,#0E3B2C);color:#fff;box-shadow:0 12px 24px -12px rgba(14,59,44,.95),inset 0 1px 0 rgba(255,255,255,.2)}
+.nav button[aria-pressed="true"] svg{color:#E5C16C}
+.statcard{display:none}
+.todaybtn{transition:transform .25s var(--ease),box-shadow .25s}
+.todaybtn:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px var(--gold)}
+.today-dot{animation:ping 2.2s ease-out infinite}
+.me-chip:hover,.side-btn:hover{box-shadow:0 0 22px -10px var(--gold)}
 
 /* ---- canvas ---- */
 .canvas{border-radius:26px;box-shadow:0 26px 60px -30px rgba(40,30,10,.55),inset 0 0 0 1px rgba(255,255,255,.35)}
@@ -459,27 +446,47 @@ body{background:radial-gradient(900px 600px at 0% 0%,color-mix(in srgb,var(--gol
 .app[data-view="fan"] .scene{opacity:.55}
 #fx{position:absolute;inset:0;z-index:6;width:100%;height:100%;pointer-events:none}
 .app[data-view="tree"] #fx,.app[data-view="fan"] #fx{z-index:0}
-.statcard{display:none}
-.hs b,.kpi b,.sim-year,.stat b,.statcard b,.tl-y,.ev .when b{font-variant-numeric:lining-nums tabular-nums;font-feature-settings:"lnum" 1}
+.hs b,.kpi b,.sim-year,.stat b,.tl-y,.ev .when b{font-family:var(--sans);font-weight:600;letter-spacing:-.02em}
 
-/* ---- tree cards ---- */
-.card{border-width:1.5px;border-radius:20px;background:linear-gradient(180deg,color-mix(in srgb,var(--card) 100%,#fff 0%),color-mix(in srgb,var(--card) 90%,var(--sunk)));
-  box-shadow:0 14px 28px -16px rgba(50,36,10,.55),inset 0 1px 0 rgba(255,255,255,.7);transition:box-shadow .3s var(--ease),transform .3s var(--ease)}
-.card::before{inset:3px;border-radius:17px;border-color:color-mix(in srgb,var(--gold) 38%,transparent)}
-.card:hover{transform:translateY(-5px) scale(1.025);box-shadow:0 26px 40px -18px rgba(50,36,10,.6),0 0 0 3px color-mix(in srgb,var(--gold) 30%,transparent)}
-.card.sel{animation:glow 2.4s ease-in-out infinite}
-.card.me{animation:glow 2.4s ease-in-out infinite;--glow:var(--gold)}
-.card .av{transition:transform .4s var(--ease)}.card:hover .av{transform:scale(1.07)}
-.card .nm{font-size:18.5px}
+/* ---- tree: photo cards, gold connectors, pills, birds, minimap ---- */
+.app[data-view="tree"] .scene::after,.app[data-view="fan"] .scene::after{inset:0;background:linear-gradient(180deg,rgba(248,243,229,.62),rgba(248,243,229,.2) 42%,rgba(248,243,229,.34))}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .app[data-view="tree"] .scene::after{background:linear-gradient(180deg,rgba(10,16,30,.5),rgba(10,16,30,.3))}}
+.bird{position:absolute;left:-60px;width:34px;height:14px;color:#3E4A3A;opacity:.55;animation:fly var(--t,60s) linear var(--dl,0s) infinite;pointer-events:none}
+.bird path{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;transform-origin:50% 100%;animation:flap .6s ease-in-out infinite alternate}
+.app:not([data-view="tree"]):not([data-view="fan"]) .bird{display:none}
+.card{--cm:#7BAEDF;--cf:#E88B9D;border:2px solid var(--cm);border-radius:22px;background:linear-gradient(180deg,color-mix(in srgb,var(--man-soft) 40%,var(--card)),var(--card));
+  box-shadow:0 16px 30px -18px rgba(50,36,10,.7),inset 0 1px 0 rgba(255,255,255,.8);transition:box-shadow .3s var(--ease),transform .3s var(--ease)}
+.card.f{border-color:var(--cf);background:linear-gradient(180deg,color-mix(in srgb,var(--woman-soft) 75%,var(--card)),var(--card))}
+.card::before{inset:4px;border-radius:17px;border:1px solid color-mix(in srgb,var(--cm) 35%,transparent)}
+.card.f::before{border-color:color-mix(in srgb,var(--cf) 35%,transparent)}
+.card::after{content:"";position:absolute;left:-8px;top:-8px;width:22px;height:22px;border-radius:50%;background:var(--cm);border:3px solid var(--card);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.card.f::after{background:var(--cf)}
+.card:hover{transform:translateY(-6px) scale(1.03);box-shadow:0 28px 40px -20px rgba(50,36,10,.7),0 0 0 4px color-mix(in srgb,var(--gold) 28%,transparent)}
+.card.sel{border-color:var(--gold);animation:glow 2.4s ease-in-out infinite}
+.card.me{animation:glow 2.4s ease-in-out infinite}
+.card .av{width:96px;height:96px;font-size:30px;margin-bottom:6px;transition:transform .45s var(--ease)}
+.card:hover .av{transform:scale(1.07)}
+.card .nm{font-size:19px;font-weight:700}
+.card .yr{font-size:13px;letter-spacing:.01em}
 .rel{border-radius:999px}
-.gen{background:linear-gradient(180deg,var(--card),var(--gold-soft));letter-spacing:.14em;border-radius:999px}
-.links .ln{stroke:var(--branch);stroke-width:2.6}
-.links{filter:drop-shadow(0 2px 3px rgba(60,40,10,.25))}
-.av{transition:box-shadow .3s}
+.gen{padding:5px 28px;border-radius:999px;font-weight:800;font-size:15px;letter-spacing:.07em;color:#4A3410;border:1.5px solid #B88A2E;background:linear-gradient(180deg,#F6E6B0,#E0B65C);box-shadow:0 8px 18px -8px rgba(120,84,10,.7),inset 0 1px 0 rgba(255,255,255,.7);z-index:2}
+.links{filter:drop-shadow(0 0 3px rgba(255,250,232,.95)) drop-shadow(0 3px 4px rgba(60,40,10,.25))}
+.links .ln{stroke:#C99637;stroke-width:3.4}
+.links .mar{stroke:#C99637;stroke-width:3.4}
+.links .ring{stroke:#C99637;stroke-width:3.4}
+.links .ringbg{fill:#FFF8E6}
 .stage.enter .card{animation:popIn .7s var(--ease) both;animation-delay:var(--d,0s)}
 .stage.enter .gen{animation:fadeUp .6s var(--ease) both;animation-delay:var(--d,0s)}
 .stage.enter .links .ln{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.5s var(--ease) .25s forwards}
 .stage.enter .links .ring,.stage.enter .links .ringbg{animation:fadeUp .8s ease .9s both}
+.minimap{position:absolute;z-index:22;right:14px;bottom:14px;width:210px;height:150px;border-radius:18px;border:1px solid color-mix(in srgb,var(--gold) 55%,var(--line));background:color-mix(in srgb,var(--card) 86%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:var(--shadow);overflow:hidden;cursor:pointer;animation:fadeUp .6s var(--ease) .6s both}
+.minimap svg{width:100%;height:100%;display:block}
+.minimap .vw{fill:color-mix(in srgb,var(--green) 14%,transparent);stroke:var(--green);vector-effect:non-scaling-stroke;stroke-width:2}
+#addBtn{background:linear-gradient(135deg,#1A6A4F,#0E3B2C);border-color:transparent;color:#fff;box-shadow:0 12px 24px -12px rgba(14,59,44,.95)}
+#addBtn:hover{color:#fff;filter:brightness(1.15)}
+#zFit{box-shadow:inset 0 0 0 2px var(--green);color:var(--green)}
+@keyframes fly{from{transform:translateX(0)}to{transform:translateX(calc(100vw + 120px))}}
+@keyframes flap{from{transform:scaleY(1)}to{transform:scaleY(.35)}}
 
 /* ---- plain pages (home/list/time/map/photos) ---- */
 .listview{background:linear-gradient(color-mix(in srgb,var(--paper) 91%,transparent),color-mix(in srgb,var(--paper) 91%,transparent)),var(--orn) 0 0/72px,var(--paper);-webkit-backdrop-filter:none;backdrop-filter:none;scroll-behavior:smooth}
@@ -642,18 +649,20 @@ body{background:radial-gradient(900px 600px at 0% 0%,color-mix(in srgb,var(--gol
 
 /* phones */
 @media (max-width:900px){
-  .brand h1{color:var(--ink);font-size:21px}
-  .brand .mark{color:var(--gold);animation:none}
-  .side-more{background:linear-gradient(175deg,var(--emerald),var(--emerald2));color:#EFE8D2;border-left:1px solid rgba(201,162,79,.4)}
-  .nav{display:flex;overflow-x:auto;gap:2px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;background:color-mix(in srgb,var(--emerald) 94%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid rgba(201,162,79,.4)}
+  .brand h1{font-size:21px;color:#FBF4DF}
+  .brand p{display:none}
+  .side .mark{animation:none;color:#E5C16C}
+  .side::before{display:none}
+  .nav{display:flex;overflow-x:auto;gap:2px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;background:color-mix(in srgb,var(--panel) 94%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid color-mix(in srgb,var(--gold) 45%,var(--line))}
   .nav::-webkit-scrollbar{display:none}
-  .nav button{flex:0 0 auto;min-width:74px;scroll-snap-align:center;color:#C5D8CD}
+  .nav button{flex:0 0 auto;min-width:74px;scroll-snap-align:center}
   .nav button[aria-pressed="true"]{box-shadow:none}
   .nav:has(#exportBtn[hidden]){display:flex}
   .hero{min-height:300px;border-radius:22px}.hero-in{padding:28px 20px}
   .hero-shade{background:linear-gradient(0deg,rgba(7,39,29,.92) 0%,rgba(7,39,29,.55) 60%,rgba(7,39,29,.25))}
   .hgrid,.mapwrap{grid-template-columns:minmax(0,1fr)}
   .hero-orn{display:none}
+  .minimap{display:none}
   .sim-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.kpi{padding:8px 10px}.kpi b{font-size:24px}.kpi span{font-size:11px}
   .hstats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .hs{flex-direction:column;align-items:flex-start;gap:10px;padding:14px}
@@ -711,7 +720,7 @@ body{background:radial-gradient(900px 600px at 0% 0%,color-mix(in srgb,var(--gol
   <div class="scrim" id="scrim" hidden></div>
 
   <main class="canvas">
-    <div class="scene" aria-hidden="true"></div>
+    <div class="scene" aria-hidden="true"><svg class="bird" style="top:11%;--t:58s;--dl:0s" viewBox="0 0 34 14"><path d="M1 12Q9 -2 17 10Q25 -2 33 12"/></svg><svg class="bird" style="top:17%;--t:74s;--dl:-22s" viewBox="0 0 34 14"><path d="M1 12Q9 -2 17 10Q25 -2 33 12"/></svg><svg class="bird" style="top:8%;--t:66s;--dl:-41s" viewBox="0 0 34 14"><path d="M1 12Q9 -2 17 10Q25 -2 33 12"/></svg><svg class="bird" style="top:22%;--t:88s;--dl:-9s" viewBox="0 0 34 14"><path d="M1 12Q9 -2 17 10Q25 -2 33 12"/></svg><svg class="bird" style="top:14%;--t:52s;--dl:-33s" viewBox="0 0 34 14"><path d="M1 12Q9 -2 17 10Q25 -2 33 12"/></svg></div>
     <canvas id="fx" aria-hidden="true"></canvas>
     <div class="viewport" id="vp"><div class="stage" id="stage"></div></div>
     <div class="listview" id="list" hidden></div>
@@ -732,6 +741,7 @@ body{background:radial-gradient(900px 600px at 0% 0%,color-mix(in srgb,var(--gol
       <div class="tb-spacer"></div>
       <button class="btn gold" id="addBtn" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg><span data-t="add"></span></button>
     </div>
+    <div class="minimap" id="mini" hidden><svg id="miniSvg" preserveAspectRatio="xMidYMid meet"></svg></div>
     <div class="pager pill" id="pager" hidden>
       <button id="pgPrev" aria-label="Oldingi shox"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
       <div class="pg-t"><b id="pgTitle"></b><small id="pgSub"></small></div>
@@ -1123,7 +1133,7 @@ function linkPath(f, r){
 
 /* ================= Pan & zoom ================= */
 const PZ = { x:0, y:0, k:1, vp:$("vp"), st:$("stage"), dragged:false,
-  apply(){ this.st.style.transform = `translate(${this.x}px,${this.y}px) scale(${this.k})`; const zp = document.getElementById("zPct"); if (zp) zp.textContent = Math.round(this.k * 100) + "%"; },
+  apply(){ this.st.style.transform = `translate(${this.x}px,${this.y}px) scale(${this.k})`; if (window.MINI) MINI.view(); const zp = document.getElementById("zPct"); if (zp) zp.textContent = Math.round(this.k * 100) + "%"; },
   zoomAt(f, cx, cy){ const k = Math.min(2.5, Math.max(0.08, this.k * f)); const r = k / this.k;
     this.x = cx - (cx - this.x) * r; this.y = cy - (cy - this.y) * r; this.k = k; this.apply(); },
   side(){ const sh = document.getElementById("sheet"); return sh && !sh.hidden && window.innerWidth > 900 ? sh.offsetWidth + 24 : 0; },
@@ -1248,11 +1258,39 @@ function renderTree(){
     const p = P(n.id), rel = relOf(n.id);
     cards += `<button class="card ${p.gender === "f" ? "f" : "m"}${n.inLaw ? " in-law" : ""}${S.selId === p.id ? " sel" : ""}${S.meId === p.id ? " me" : ""}" data-id="${esc(p.id)}" style="left:${n.x + padL}px;top:${n.y + pad}px;width:${TD.w}px;height:${TD.h}px">
       ${rel ? `<span class="rel" title="${esc(dn(rel.term))}">${esc(dn(rel.term))}</span>` : ""}
-      ${avatar(p)}<span class="nm">${esc(first(p))}</span>${p.lastName ? `<span class="sn">${esc(dn(p.lastName))}</span>` : ""}<span class="yr">${esc(yrs(p)) || "&nbsp;"}</span></button>`;
+      ${avatar(p)}<span class="nm">${esc(first(p))}</span>${p.lastName ? `<span class="sn">${esc(dn(p.lastName))}</span>` : ""}<span class="yr">${yrs(p) ? "(" + esc(yrs(p)) + ")" : "&nbsp;"}</span></button>`;
   }
   PZ.st.style.width = W + "px"; PZ.st.style.height = H + "px";
   PZ.st.innerHTML = svg + gens + cards;
+  MINI.build(Lt, W, H, padL, pad);
 }
+
+/* ================= Minimap ================= */
+const MINI = (() => {
+  const box = $("mini"), svg = $("miniSvg"); let dims = null;
+  const NS = "http://www.w3.org/2000/svg";
+  function build(Lt, W, H, padL, pad){
+    const u = W / 200, sw = Math.max(2, u * 1.6);
+    const links = Lt.families.map(f => `<path d="${linkPath(f, 16)}" fill="none" stroke="#C99637" stroke-width="${sw}"/>`).join("") + Lt.marriages.map(m => `<path d="M${m.x1} ${m.y}H${m.x2}" stroke="#C99637" stroke-width="${sw}"/>`).join("");
+    const nodes = Lt.nodes.map(n => `<rect x="${n.x}" y="${n.y}" width="${TD.w}" height="${TD.h}" rx="${TD.w * .16}" fill="${P(n.id)?.gender === "f" ? "#E88B9D" : "#7BAEDF"}" opacity="${n.inLaw ? .55 : .95}"/>`).join("");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = `<g transform="translate(${padL} ${pad})">${links}${nodes}</g><rect class="vw" id="miniVw" x="0" y="0" width="0" height="0" rx="${u * 3}"/>`;
+    dims = { W, H }; box.hidden = S.view !== "tree" || !Lt.nodes.length; view();
+  }
+  function view(){
+    const r = $("miniVw"); if (!r || !dims) return; const k = PZ.k;
+    r.setAttribute("x", -PZ.x / k); r.setAttribute("y", -PZ.y / k); r.setAttribute("width", PZ.vp.clientWidth / k); r.setAttribute("height", PZ.vp.clientHeight / k);
+  }
+  function jump(e){
+    if (!dims) return; const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const q = pt.matrixTransform(svg.getScreenCTM().inverse());
+    PZ.x = PZ.vp.clientWidth / 2 - q.x * PZ.k; PZ.y = PZ.vp.clientHeight / 2 - q.y * PZ.k; PZ.apply();
+  }
+  let down = false;
+  box.addEventListener("pointerdown", e => { down = true; box.setPointerCapture(e.pointerId); jump(e); e.stopPropagation(); });
+  box.addEventListener("pointermove", e => { if (down) jump(e); });
+  box.addEventListener("pointerup", () => { down = false; });
+  return { build, view };
+})();
 
 /* ================= Fan view ================= */
 const R = [92,178,256,326,388,444,494];
@@ -1640,7 +1678,7 @@ function renderChrome(){
   const today = S.loaded ? upcoming(0).length : 0;
   $("todayBtn").hidden = !today;
   if (today) $("todayBtn").innerHTML = `<span class="today-dot">${today}</span>${esc(t("todayDates"))}`;
-  $("legend").hidden = S.view !== "fan" || !n;
+  $("legend").hidden = S.view !== "fan" || !n; $("mini").hidden = S.view !== "tree" || !n;
   if (S.view !== "tree"){ $("pager").hidden = true; $("pageMode").hidden = true; }
   $("menuDot").hidden = !(S.loaded && upcoming(0).length);
   $("zoom").hidden = PLAIN.has(S.view) || !n;
