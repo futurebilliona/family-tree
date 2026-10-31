@@ -52,24 +52,22 @@ button{cursor:pointer}
   padding-block:14px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
 
 /* ---------- Side panel ---------- */
-.side{background:var(--panel);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-s);display:flex;flex-direction:column;gap:18px;padding:22px 16px 16px;min-height:0;overflow:auto}
+.side{background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;gap:18px;padding:22px 16px 16px;min-height:0;overflow:auto}
 .brand{display:grid;justify-items:center;gap:6px;text-align:center}
 .mark{width:58px;height:58px;color:var(--gold);flex:none}
 .title-row{display:flex;align-items:flex-start;justify-content:center;gap:2px}
-.brand h1{font-family:var(--serif);font-weight:800;font-size:30px;line-height:1.05;margin:0;text-wrap:balance;color:var(--ink)}
+.brand h1{font-family:var(--serif);font-weight:800;line-height:1.05;margin:0;text-wrap:balance;color:var(--ink)}
 .title-input{font-family:var(--serif);font-weight:800;font-size:22px;border:1px solid var(--gold);background:var(--card);border-radius:10px;padding:4px 8px;width:100%;box-sizing:border-box;text-align:center}
 .brand p{margin:0;color:var(--muted);font-size:13.5px;font-variant-numeric:tabular-nums}
 .icon-btn{border:0;background:transparent;width:32px;height:32px;border-radius:9px;display:inline-grid;place-items:center;color:var(--muted);flex:none}
 .icon-btn:hover{background:var(--gold-soft);color:var(--gold)}
 .nav{display:grid;gap:4px}
-.nav button{display:flex;align-items:center;gap:12px;border:0;background:transparent;border-radius:14px;padding:11px 14px;font-weight:500;font-size:15.5px;color:var(--ink);text-align:left}
+.nav button{display:flex;align-items:center;gap:12px;border:0;background:transparent;padding:11px 14px;font-weight:500;font-size:15.5px;color:var(--ink);text-align:left}
 .nav button svg{flex:none;color:var(--muted)}
 .nav button:hover{background:var(--sunk)}
-.nav button[aria-pressed="true"]{background:var(--green);color:var(--green-ink);box-shadow:var(--shadow-s)}
-.nav button[aria-pressed="true"] svg{color:var(--green-ink)}
 .orn{display:flex;align-items:center;gap:8px;color:var(--gold);opacity:.7}
 .orn::before,.orn::after{content:"";flex:1;height:1px;background:currentColor;opacity:.5}
-.statcard{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:18px;padding:14px;background:var(--card)}
+.statcard{align-items:center;gap:12px;border:1px solid var(--line);border-radius:18px;padding:14px;background:var(--card)}
 .statcard svg{width:44px;height:52px;color:var(--gold);flex:none}
 .statcard small{display:block;color:var(--muted);font-size:13px}
 .statcard b{display:block;font-family:var(--serif);font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
@@ -85,20 +83,20 @@ button{cursor:pointer}
 .me-chip b{font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .me-chip small{color:var(--muted);font-size:12.5px}
 .me-chip .mc-ic{width:40px;height:40px;border-radius:50%;border:1px dashed var(--gold);display:grid;place-items:center;color:var(--gold);flex:none}
-.side-btn,.hbtn{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:9px 12px;font-weight:500;display:flex;gap:9px;align-items:center;justify-content:center;font-size:14.5px}
-.side-btn:hover,.hbtn:hover{border-color:var(--gold);color:var(--gold)}
+.side-btn{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:9px 12px;font-weight:500;display:flex;gap:9px;align-items:center;justify-content:center;font-size:14.5px}
+.side-btn:hover{border-color:var(--gold);color:var(--gold)}
 .seg{display:inline-flex;background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
 .seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-weight:500;color:var(--muted);font-size:14px}
 .seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow-s)}
 
 /* ---------- Canvas with painted scene ---------- */
-.canvas{position:relative;min-height:0;border-radius:24px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(180deg,var(--sky1),var(--sky2) 70%);box-shadow:var(--shadow-s)}
+.canvas{position:relative;min-height:0;overflow:hidden;border:1px solid var(--line);background:linear-gradient(180deg,var(--sky1),var(--sky2) 70%)}
 .scene{position:absolute;inset:0;pointer-events:none;background:url("/img/tree.jpg") center 62%/cover no-repeat;filter:var(--scene-filter)}
 .scene::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 30%,transparent),color-mix(in srgb,var(--panel) 6%,transparent) 40%,color-mix(in srgb,var(--panel) 22%,transparent))}
 .tbtn{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex:none;padding:9px 14px;font-weight:500;font-size:14.5px;border:1px solid var(--line)}
 .tbtn[aria-pressed="true"]{background:var(--green);color:var(--green-ink);border-color:var(--green)}
 .pager{position:absolute;z-index:20;left:50%;transform:translateX(-50%);bottom:16px;display:flex;align-items:center;gap:6px;padding:5px;max-width:calc(100% - 24px);box-sizing:border-box}
-.pager button{width:44px;height:44px;border:0;border-radius:11px;background:var(--green);color:var(--green-ink);display:grid;place-items:center;flex:none}
+.pager button{width:44px;height:44px;border:0;border-radius:11px;color:var(--green-ink);display:grid;place-items:center;flex:none}
 .pager button:disabled{background:var(--sunk);color:var(--muted);cursor:default}
 .pg-t{display:grid;text-align:center;min-width:0;padding:0 10px}
 .pg-t b{font-family:var(--serif);font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -111,7 +109,7 @@ button{cursor:pointer}
 .stage{position:absolute;left:0;top:0;transform-origin:0 0}
 .topbar{position:absolute;z-index:20;top:12px;left:12px;right:12px;display:flex;flex-wrap:nowrap;gap:8px;align-items:center;pointer-events:none}
 .topbar>*{pointer-events:auto}
-.pill{background:color-mix(in srgb,var(--card) 94%,transparent);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-s);backdrop-filter:blur(6px)}
+.pill{background:color-mix(in srgb,var(--card) 94%,transparent);border:1px solid var(--line);border-radius:14px}
 .search{position:relative;flex:0 1 270px;min-width:150px}
 .search input{width:100%;border:0;background:transparent;padding:10px 64px 10px 40px;box-sizing:border-box;font-size:15px;border-radius:14px}
 .search>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
@@ -153,9 +151,9 @@ button{cursor:pointer}
 .btn{border:1px solid var(--line);background:var(--card);border-radius:13px;padding:9px 16px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;font-size:15px}
 .btn:hover{border-color:var(--gold);color:var(--gold)}
 .btn:disabled{opacity:.55;cursor:default}
-.btn.primary{background:var(--green);border-color:var(--green);color:var(--green-ink)}
+.btn.primary{border-color:var(--green);color:var(--green-ink)}
 .btn.primary:hover{filter:brightness(1.1);color:var(--green-ink)}
-.btn.gold{background:var(--gold-btn);border-color:var(--gold-btn);color:#FFFDF6;box-shadow:var(--shadow-s)}
+.btn.gold{border-color:var(--gold-btn);color:#FFFDF6}
 .btn.gold:hover{filter:brightness(1.07);color:#FFFDF6}
 .btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,var(--line))}
 .btn.danger.armed{background:var(--danger);color:#fff;border-color:var(--danger)}
@@ -171,25 +169,21 @@ button{cursor:pointer}
 
 /* ---------- Tree ---------- */
 .links{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
-.links .ln{fill:none;stroke:var(--branch);stroke-width:2.6;stroke-linecap:round}
-.links .mar{stroke:var(--branch);stroke-width:2.6}
-.links .ring{fill:none;stroke:var(--gold);stroke-width:3}
-.links .ringbg{fill:var(--card);stroke:none}
-.gen{position:absolute;transform:translateX(-50%);z-index:1;padding:3px 14px;border-radius:999px;background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold);font-weight:600;font-size:13px;letter-spacing:.08em;white-space:nowrap;box-shadow:var(--shadow-s)}
-.card{position:absolute;display:flex;flex-direction:column;align-items:center;gap:1px;padding:18px 10px 10px;border:2px solid var(--man);border-radius:20px;background:var(--card);text-align:center;box-sizing:border-box;
-  transition:box-shadow .15s,transform .15s;box-shadow:var(--shadow-s)}
-.card.f{border-color:var(--woman)}
-.card::before{content:"";position:absolute;inset:4px;border:1px solid color-mix(in srgb,var(--man) 30%,transparent);border-radius:15px;pointer-events:none}
+.links .ln{fill:none;stroke-linecap:round}
+.links .ring{fill:none}
+.links .ringbg{stroke:none}
+.gen{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.card{position:absolute;display:flex;flex-direction:column;align-items:center;gap:1px;padding:18px 10px 10px;background:var(--card);text-align:center;box-sizing:border-box}
+.card::before{content:"";position:absolute;border:1px solid color-mix(in srgb,var(--man) 30%,transparent);pointer-events:none}
 .card.f::before{border-color:color-mix(in srgb,var(--woman) 30%,transparent)}
-.card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
-.card.sel{border-color:var(--gold);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 45%,transparent),var(--shadow);transform:translateY(-2px)}
+.card:hover{box-shadow:var(--shadow)}
+.card.sel{box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 45%,transparent),var(--shadow);transform:translateY(-2px)}
 .card.me{box-shadow:0 0 0 4px var(--gold),var(--shadow-s)}
 .card.in-law{background:color-mix(in srgb,var(--card) 88%,var(--sunk))}
-.card .av{width:88px;height:88px;font-size:28px;margin-bottom:6px}
-.card .nm{font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .nm{font-family:var(--serif);line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card .sn{font-size:13px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.card .yr{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.rel{position:absolute;z-index:2;top:0;left:50%;transform:translate(-50%,-50%);width:max-content;max-width:calc(100% + 40px);background:var(--card);border:1px solid var(--gold);color:var(--gold);border-radius:11px;padding:2px 10px;font-size:12px;line-height:1.25;font-weight:600;text-align:center;box-sizing:border-box;box-shadow:var(--shadow-s);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.card .yr{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rel{position:absolute;z-index:2;top:0;left:50%;transform:translate(-50%,-50%);width:max-content;max-width:calc(100% + 40px);background:var(--card);border:1px solid var(--gold);color:var(--gold);padding:2px 10px;font-size:12px;line-height:1.25;font-weight:600;text-align:center;box-sizing:border-box;box-shadow:var(--shadow-s);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .card.me .rel{background:var(--gold);color:var(--card)}
 .av{width:62px;height:62px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--serif);font-weight:700;font-size:21px;overflow:hidden;background:var(--man-soft);color:var(--man);
   box-shadow:0 0 0 3px var(--card),0 0 0 5px color-mix(in srgb,var(--man) 70%,transparent)}
@@ -212,15 +206,12 @@ button{cursor:pointer}
 .fan .chain{fill:none;stroke:var(--gold);stroke-width:3.5;pointer-events:none}
 
 /* ---------- List view ---------- */
-.listview{position:absolute;inset:0;overflow:auto;padding:76px clamp(14px,3vw,30px) 30px;z-index:2;background:color-mix(in srgb,var(--paper) 80%,transparent);backdrop-filter:blur(2px)}
+.listview{position:absolute;inset:0;overflow:auto;padding:76px clamp(14px,3vw,30px) 30px;z-index:2;background:color-mix(in srgb,var(--paper) 80%,transparent)}
 .lv-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:26px;max-width:1180px;margin:0 auto}
 .lv-grid>*{min-width:0}
-.lv-h{font-family:var(--serif);font-size:27px;font-weight:700;margin:0 0 12px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.lv-h{font-family:var(--serif);margin:0 0 12px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .lv-h small{font-family:var(--sans);font-size:14px;color:var(--muted);font-weight:400}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
-.stat{border:1px solid var(--line);border-radius:18px;padding:14px 16px;background:var(--card);box-shadow:var(--shadow-s)}
-.stat b{display:block;font-family:var(--serif);font-size:38px;line-height:1;font-variant-numeric:tabular-nums}
-.stat span{color:var(--muted);font-size:14px}
 .upc{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:12px}
 .ev{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:18px;padding:12px 14px;background:var(--card);text-align:left;width:100%;min-width:0;box-shadow:var(--shadow-s)}
 .ev:hover{border-color:var(--gold)}
@@ -355,17 +346,15 @@ tbody tr:hover td{background:var(--sunk)}
   .brand{grid-column:1;grid-row:1;display:flex;align-items:center;gap:10px;text-align:left;min-width:0;padding:4px 6px}
   .brand .mark{width:34px;height:34px}
   .title-row{min-width:0;justify-content:flex-start}
-  .brand h1{font-size:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .brand p{display:none}
+  .brand h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .title-input{font-size:18px}
   .menu-btn{grid-column:2;grid-row:1;display:grid;place-items:center;position:relative;width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);box-shadow:var(--shadow-s)}
   .menu-dot{position:absolute;top:8px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--gold)}
   .canvas{grid-column:1 / -1;grid-row:2;border-radius:20px}
-  .nav{position:fixed;z-index:50;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -8px 24px -16px rgba(0,0,0,.35);
+  .nav{position:fixed;z-index:50;left:0;right:0;bottom:0;grid-template-columns:repeat(4,1fr);background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -8px 24px -16px rgba(0,0,0,.35);
     padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
   .nav button{flex-direction:column;gap:3px;padding:7px 2px;border-radius:12px;font-size:11.5px;font-weight:500;text-align:center;justify-content:center;line-height:1.15}
   .nav button[hidden]{display:none}
-  .nav button[aria-pressed="true"]{box-shadow:none}
   .nav:has(#exportBtn[hidden]){grid-template-columns:repeat(3,1fr)}
   .side-more{position:fixed;z-index:70;top:0;right:0;bottom:0;width:min(330px,86vw);box-sizing:border-box;background:var(--panel);border-left:1px solid var(--line);box-shadow:var(--shadow);
     padding:calc(env(safe-area-inset-top,0px) + 20px) max(18px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 20px) 18px;overflow:auto;
@@ -378,8 +367,6 @@ tbody tr:hover td{background:var(--sunk)}
   .topbar{top:8px;left:8px;right:8px;gap:6px;flex-wrap:wrap}
   .app[data-view="list"] .search{flex:1 1 0}
   .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-  .stat{padding:10px 12px}
-  .stat b{font-size:30px}
   .search{flex:1 1 100%}
   .search input{padding-block:9px}
   .kbd{display:none}
@@ -458,7 +445,7 @@ body{background:radial-gradient(900px 620px at 0% 0%,rgba(60,170,120,.28),transp
 .app[data-view="fan"] .scene{opacity:.55}
 #fx{position:absolute;inset:0;z-index:6;width:100%;height:100%;pointer-events:none}
 .app[data-view="tree"] #fx,.app[data-view="fan"] #fx{z-index:0}
-.hs b,.kpi b,.sim-year,.stat b,.tl-y,.ev .when b{font-family:var(--sans);font-weight:600;letter-spacing:-.02em}
+.hs b,.kpi b,.sim-year,.tl-y,.ev .when b{font-family:var(--sans);font-weight:600;letter-spacing:-.02em}
 
 /* ---- tree: photo cards, gold connectors, pills, birds, minimap ---- */
 .app[data-view="tree"] .scene::after,.app[data-view="fan"] .scene::after{inset:0;background:linear-gradient(180deg,rgba(248,243,229,.62),rgba(248,243,229,.2) 42%,rgba(248,243,229,.34))}
@@ -470,13 +457,13 @@ body{background:radial-gradient(900px 620px at 0% 0%,rgba(60,170,120,.28),transp
 .bird path{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;transform-origin:50% 100%;animation:flap .6s ease-in-out infinite alternate}
 .app:not([data-view="tree"]):not([data-view="fan"]) .bird{display:none}
 .card{--cm:#7BAEDF;--cf:#E88B9D;border:2px solid var(--cm);border-radius:22px;background:linear-gradient(180deg,color-mix(in srgb,var(--man-soft) 40%,var(--card)),var(--card));
-  box-shadow:0 16px 30px -18px rgba(50,36,10,.7),inset 0 1px 0 rgba(255,255,255,.8);transition:box-shadow .3s var(--ease),transform .3s var(--ease)}
+  box-shadow:0 16px 30px -18px rgba(50,36,10,.7),inset 0 1px 0 rgba(255,255,255,.8)}
 .card.f{border-color:var(--cf);background:linear-gradient(180deg,color-mix(in srgb,var(--woman-soft) 75%,var(--card)),var(--card))}
 .card::before{inset:4px;border-radius:17px;border:1px solid color-mix(in srgb,var(--cm) 35%,transparent)}
 .card.f::before{border-color:color-mix(in srgb,var(--cf) 35%,transparent)}
 .card::after{content:"";position:absolute;left:-8px;top:-8px;width:22px;height:22px;border-radius:50%;background:var(--cm);border:3px solid var(--card);box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .card.f::after{background:var(--cf)}
-.card:hover{transform:translateY(-6px) scale(1.03);box-shadow:0 28px 40px -20px rgba(50,36,10,.7),0 0 0 4px color-mix(in srgb,var(--gold) 28%,transparent)}
+.card:hover{box-shadow:0 28px 40px -20px rgba(50,36,10,.7),0 0 0 4px color-mix(in srgb,var(--gold) 28%,transparent)}
 .card.sel{border-color:var(--gold);animation:glow 2.4s ease-in-out infinite}
 .card.me{animation:glow 2.4s ease-in-out infinite}
 .card .av{width:96px;height:96px;font-size:30px;margin-bottom:6px;transition:transform .45s var(--ease)}
@@ -532,9 +519,6 @@ body{background:radial-gradient(900px 620px at 0% 0%,rgba(60,170,120,.28),transp
 .qa button{width:30px;height:30px;padding:0;border-radius:50%;border:1px solid color-mix(in srgb,var(--gold) 55%,var(--line));background:var(--card);color:var(--green);display:grid;place-items:center;box-shadow:var(--shadow-s);transition:background .2s,color .2s,transform .2s var(--ease)}
 .qa button:hover,.qa button:focus-visible{background:var(--green);color:#fff;transform:scale(1.12)}
 .card:hover{transform:perspective(800px) translateY(-6px) scale(1.03) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
-.mcard:hover{transform:perspective(700px) translateY(-6px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
-.hs:hover{transform:perspective(700px) translateY(-5px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
-.mini:hover{transform:perspective(500px) translateY(-4px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
 .mcard .st{position:absolute;right:14px;top:14px;width:11px;height:11px;border-radius:50%;background:#3FBF7F;box-shadow:0 0 0 3px color-mix(in srgb,#3FBF7F 25%,transparent)}
 .mcard .st.d{background:var(--muted);box-shadow:0 0 0 3px color-mix(in srgb,var(--muted) 22%,transparent)}
 .mcard .pl{position:relative;color:var(--muted);font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -550,7 +534,7 @@ body{background:radial-gradient(900px 620px at 0% 0%,rgba(60,170,120,.28),transp
 .reveal.in{opacity:1;transform:none}
 .lv-h{font-size:30px;font-weight:800}
 .lv-h::before{content:"";display:inline-block;width:10px;height:10px;transform:rotate(45deg);background:var(--gold);border-radius:2px;margin-right:2px;align-self:center}
-.stat,.ev,.tbl-wrap,.mcard,.hs{box-shadow:0 14px 30px -20px rgba(50,36,10,.5),inset 0 1px 0 rgba(255,255,255,.6)}
+.ev,.tbl-wrap,.mcard,.hs{box-shadow:0 14px 30px -20px rgba(50,36,10,.5),inset 0 1px 0 rgba(255,255,255,.6)}
 .ev{transition:transform .3s var(--ease),border-color .2s,box-shadow .3s}.ev:hover{transform:translateY(-3px)}
 .who b{font-weight:700}
 
@@ -619,7 +603,7 @@ body{background:radial-gradient(900px 620px at 0% 0%,rgba(60,170,120,.28),transp
 .sim .seg{background:rgba(0,0,0,.28);border-color:rgba(255,255,255,.14)}.sim .seg button{color:#A8C2B4}.sim .seg button[aria-pressed="true"]{background:rgba(255,255,255,.16);color:#fff}
 .scrub{flex:1;min-width:160px;accent-color:#E5C16C;height:28px}
 .sim-chart{width:100%;height:120px;display:block}
-.sim-chart .area{fill:url(#simg);}
+.sim-chart .area{fill:url(#simg)}
 .sim-chart .line{fill:none;stroke:#E5C16C;stroke-width:2.2;filter:drop-shadow(0 0 6px rgba(229,193,108,.8))}
 .sim-chart .cur{stroke:#fff;stroke-width:1.5;stroke-dasharray:3 4}
 .sim-chart .dot{fill:#fff;filter:drop-shadow(0 0 8px #E5C16C)}
@@ -837,7 +821,7 @@ body{background:radial-gradient(900px 620px at 0% 0%,rgba(60,170,120,.28),transp
 <div class="modal" id="modal" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="/sj-adapter.js?v=414d091150"></script>
+<script src="/sj-adapter.js?v=faec8f15b1"></script>
 <script>
 /* ================= Script conversion (Latin <-> Cyrillic) ================= */
 const VOW = "aeiouAEIOU";
@@ -887,12 +871,12 @@ function dn(s){ if (!s) return ""; return S.script === "cyr" ? (isCyr(s) ? s : t
 const norm = s => prettyLat(isCyr(s||"") ? toLat(s) : (s||"")).toLowerCase().replace(/[ʻʼ']/g, "");
 
 const L = {
-  defTitle:"Oila shajarasi", ppl:"kishi", gens:"avlod", viewTree:"Daraxt", viewFan:"Doira", viewList:"Ro'yxat",
-  root:"Shajara boshi", center:"Markazda", search:"Ismni qidiring…", add:"Inson qo'shish", exportBtn:"Eksport",
+  defTitle:"Oila shajarasi", ppl:"kishi", gens:"avlod", 
+  center:"Markazda", exportBtn:"Eksport",
   loading:"Shajara yuklanmoqda…", signin:"Shajarani ko'rish uchun hisobingizga kiring.",
   emptyOT:"Shajarangizni boshlang", emptyOP:"Eng keksa ma'lum bobongiz yoki buvingizdan boshlang. Keyin har bir insonga ota-ona, turmush o'rtog'i va farzandlarini qo'shib borasiz.",
   emptyAdd:"Birinchi insonni qo'shish", emptyVT:"Shajara hali to'ldirilmagan", emptyVP:"Shajara egasi ma'lumot kiritgach, bu yerda daraxt paydo bo'ladi.",
-  born:"Tug'ilgan", died:"Vafot etgan", buried:"Dafn joyi", job:"Kasbi", parents:"Ota-onasi", spouse:"Turmush o'rtog'i", children:"Farzandlari", siblings:"Aka-uka, opa-singillari",
+  born:"Tug'ilgan", job:"Kasbi", parents:"Ota-onasi", spouse:"Turmush o'rtog'i", children:"Farzandlari", siblings:"Aka-uka, opa-singillari",
   yetti:"Yetti ota", yettiHint:"ota tomondan ma'lum bo'g'in", edit:"Tahrirlash", addLbl:"Qo'shish:", father:"Ota", mother:"Ona", child:"Farzand",
   del:"O'chirish", delConfirm:"Ha, o'chirilsin", showFan:"Doirada ko'rish", showTree:"Daraxtda ko'rish",
   formNew:"Yangi inson", formEdit:"Ma'lumotni tahrirlash", first:"Ism", last:"Familiya", patr:"Otasining ismi",
@@ -909,11 +893,11 @@ const L = {
   photoSmall:"Surat juda kichik ({w}×{h}). Kamida 400×400 piksel bo'lgan surat tanlang.", photoErr:"Suratni o'qib bo'lmadi. JPG, PNG yoki WEBP tanlang.",
   photoCrop:"Suratni suring va kattalashtiring. Doira ichidagi qism 800×800 o'lchamda, yuqori sifatda saqlanadi.", photoUse:"Shu holatda olish", photoUploading:"Surat yuklanmoqda…", photoUpErr:"Suratni yuklab bo'lmadi. Qayta urinib ko'ring.",
   photoSpec:"Kvadrat 800×800 px · JPG, PNG yoki WEBP · kamida 400×400",
-  isMe:"Bu — men", meSet:"Siz: ", mePick:"Siz kimsiz?", meHint:"Shajarada o'zingizni bosing va «Bu — men» tugmasini tanlang — har bir inson siz uchun kimligi (amaki, xola, bobo…) ko'rsatiladi.",
+  isMe:"Bu — men", mePick:"Siz kimsiz?", meHint:"Shajarada o'zingizni bosing va «Bu — men» tugmasini tanlang — har bir inson siz uchun kimligi (amaki, xola, bobo…) ko'rsatiladi.",
   forYou:"Siz uchun", cmpLbl:"Boshqa inson bilan solishtirish", cmpFor:"uchun", relNone:"Qarindoshlik aloqasi kiritilmagan", meClear:"Bu men emas",
-  age:"yosh", stTotal:"Jami", stLiving:"Hayot", stDead:"Marhum", stGen:"Avlod", stMen:"Erkaklar", stWomen:"Ayollar",
+  age:"yosh", 
   upTitle:"Yaqin sanalar", upSub:"keyingi 30 kun", upNone:"Keyingi 30 kunda tug'ilgan yoki xotira kunlari yo'q. Sanalar to'liq (kun va oy) kiritilganda bu yerda ko'rinadi.",
-  allTitle:"Barcha insonlar", thName:"Ism-familiya", thRel:"Siz uchun", thBirth:"Tug'ilgan", thPlace:"Joyi", thDeath:"Vafot", thAge:"Yoshi",
+  thName:"Ism-familiya", thRel:"Siz uchun", thBirth:"Tug'ilgan", thPlace:"Joyi", thDeath:"Vafot", thAge:"Yoshi",
   today:"Bugun", tomorrow:"Ertaga", inDays:"{n} kundan so'ng", evBirth:"Tug'ilgan kun", evBirthD:"Tavallud kuni", evDeath:"Xotira kuni",
   turns:"{n} yoshga to'ladi", yearsSince:"tavalludiga {n} yil", deathYears:"vafotiga {n} yil",
   exTitle:"Eksport", tabPoster:"Plakat (SVG)", tabCal:"Kalendar", tabBackup:"Zaxira nusxa",
@@ -942,7 +926,7 @@ const tRaw = k => { const s = L[k] || k; return S.script === "cyr" ? s.replace(/
 Object.assign(L, { viewTree:"Shajara daraxti", viewFan:"Doira ko'rinishi", viewList:"Oila a'zolari", genCount:"Avlodlar soni",
   add:"Yangi a'zo qo'shish", search:"Qidirish…", tabInfo:"Ma'lumot", tabRel:"Qarindoshlar", inlaws:"Qayin tomoni",
   bioT:"Qisqacha ma'lumot", meRole:"Shajarada siz", meNone:"Kartochkada «Bu — men»", pplOf:"{n} kishi", noRel:"Qarindoshlar hali kiritilmagan.",
-  todayDates:"Bugungi sanalar", root:"Avlod boshi", pagedOn:"Shoxlar bo'yicha", pagedOff:"Butun daraxt", branchOf:"{n} shoxi", pageOf:"{i} / {n}", menu:"Menyu" });
+  todayDates:"Bugungi sanalar", root:"Avlod boshi", pagedOn:"Shoxlar bo'yicha", pagedOff:"Butun daraxt", branchOf:"{n} shoxi", pageOf:"{i} / {n}" });
 const MONTHS = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"];
 
 /* ================= Helpers ================= */
@@ -1875,7 +1859,7 @@ Object.assign(L, { themeToDark:"Tungi rejimga o'tish", themeToLight:"Kunduzgi re
   simT:"Vaqt mashinasi", simS:"Oila yillar davomida qanday o'sganini tomosha qiling", simYear:"Yil", simAlive:"Tirik", simBorn:"Tug'ilganlar", simGen:"Avlod", simPlay:"Boshlash", simPause:"To'xtatish", simNoData:"Simulyatsiya uchun kamida bitta insonning tug'ilgan yili kerak.",
   tlTitle:"Oilamiz tarixidagi muhim voqealar", tlBorn:"Dunyoga keldi", tlDied:"Vafot etdi", simBornLog:"tug'ildi", simDiedLog:"vafot etdi",
   mapT:"Ajdodlar xaritasi", mapSub:"Tug'ilgan joylar va oila ko'chishlari", mapList:"Manzillar ro'yxati", mapNone:"Xaritada ko'rsatish uchun insonlarning «Tug'ilgan joyi»ni kiriting (masalan: Samarqand, Toshkent, Buxoro).", mapNote:"Xarita sxematik: joylar taxminiy koordinatalar bo'yicha qo'yilgan. Chiziqlar ota-ona tug'ilgan joydan farzand tug'ilgan joyga ko'chishni bildiradi.", mapUnk:"Xaritada topilmagan joylar: {n}", people:"kishi",
-  phTitle:"Oila fotoarxivi", phNone:"Hali surat yuklanmagan. Inson kartochkasida «Tahrirlash → Surat tanlash» orqali portret qo'shing.", phHint:"Suratlar a'zolarning portretlaridan yig'iladi." });
+  phTitle:"Oila fotoarxivi", phNone:"Hali surat yuklanmagan. Inson kartochkasida «Tahrirlash → Surat tanlash» orqali portret qo'shing." });
 const GEN_ROMAN = ["I","II","III","IV","V","VI","VII","VIII","IX","X"];
 const PLAIN = new Set(["home","list","time","map","photos"]);
 const ICO = {
