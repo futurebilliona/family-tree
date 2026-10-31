@@ -1136,18 +1136,22 @@ function sibGroup(k){ const arr = []; for (const q of S.people.values()) if ((q.
 // saved order first; a sibling added later goes right after the last saved sibling who is older
 // (no known birth date → at the end), so a saved arrangement is never shuffled by new records
 function orderedGroup(k, birth = sibGroup(k), ord = S.order.get(k)){
-  if (!ord || !ord.length) return birth;
-  const byId = new Map(birth.map(q => [q.id, q])), listed = ord.map(id => byId.get(id)).filter(Boolean), out = listed.slice();
+  if (!Array.isArray(ord) || !ord.length) return birth;
+  const byId = new Map(birth.map(q => [q.id, q])), listed = [...new Set(ord.filter(id => typeof id === "string"))].map(id => byId.get(id)).filter(Boolean), out = listed.slice();
   for (const u of birth) if (!out.includes(u)){ let i = -1; out.forEach((x, j) => { if (byBirth(x, u) < 0) i = j; }); out.splice(i + 1, 0, u); }
   return out;
 }
 function kKey(p){
+  if (S._ordOff) return bKey(p);
   if (!S._kk){
     const kk = new Map();
-    for (const k of S.order.keys()){ const birth = sibGroup(k); if (birth.length < 2) continue; const keys = birth.map(bKey); orderedGroup(k, birth).forEach((q, i) => kk.set(q.id, keys[i] + i / 1000)); }
+    try {
+      for (const k of S.order.keys()){ const birth = sibGroup(k); if (birth.length < 2) continue; const keys = birth.map(bKey); orderedGroup(k, birth).forEach((q, i) => { if (i < keys.length) kk.set(q.id, keys[i] + i / 1000); }); }
+    } catch(e){ console.error("[shajara] saved sibling order ignored:", e); kk.clear(); }
     S._kk = kk;
   }
-  return S._kk.has(p.id) ? S._kk.get(p.id) : bKey(p);
+  const v = S._kk.get(p.id);
+  return Number.isFinite(v) ? v : bKey(p);
 }
 const kidSort = (a, b) => kKey(a) - kKey(b) || (a.createdAt||0) - (b.createdAt||0);
 // new order for group k: the ids in `seq` take, in that order, the slots they occupy now; everyone else stays put
@@ -1643,7 +1647,8 @@ function renderTree(){
 Object.assign(L, { ordGrip:"{n}: surib tartibni o'zgartirish", ordGripT:"Surib aka-uka / opa-singillar orasidagi o'rnini o'zgartiring (← → tugmalari ham ishlaydi)",
   ordPinned:"Ikki tomon ko'rinishida bu inson markazga yaqin turadi; saqlangan o'rni oddiy daraxtda ko'rinadi", ordT:"Tartib",
   ordL:"Chapga surish", ordR:"O'ngga surish", ordReset:"Tug'ilgan sana bo'yicha", ordResetT:"Tug'ilgan sana bo'yicha tartibga qaytarish", ordSaved:"Tartib saqlandi",
-  ordCustom:"qo'lda tartiblangan", ordBirth:"tug'ilgan sana bo'yicha" });
+  ordCustom:"qo'lda tartiblangan", ordBirth:"tug'ilgan sana bo'yicha",
+  ordOffT:"Saqlangan tartibni qo'llab bo'lmadi — hozircha tug'ilgan sana bo'yicha ko'rsatilmoqda", viewErr:"Daraxtni chizishda xatolik yuz berdi. Sahifani yangilang; takrorlansa, quyidagi matnni yuboring:" });
 const pinnedIds = () => new Set(S.view === "tree" && S._Lt ? S._Lt.nodes.filter(n => n.pin).map(n => n.id) : []);
 // re-render and let every card slide from where it was drawn (pos: id -> [x, y] on screen before the change)
 function flip(fn, pos){
@@ -2260,7 +2265,14 @@ function render(fit){
   $("vp").hidden = plain; lst.hidden = !plain;
   if (S.view !== "time") simStop();
   if (S._lastView !== S.view){ S._lastView = S.view; lst.classList.remove("vin"); void lst.offsetWidth; if (plain){ lst.classList.add("vin"); lst.scrollTop = 0; } FX.refill(); }
-  ({ tree:renderTree, fan:renderFan, home:renderHome, list:renderList, time:renderTime, map:renderMap, photos:renderPhotos })[S.view]();
+  const VIEW = ({ tree:renderTree, fan:renderFan, home:renderHome, list:renderList, time:renderTime, map:renderMap, photos:renderPhotos })[S.view];
+  try { VIEW(); }
+  catch(e){
+    console.error("[shajara] " + S.view + " view failed:", e);
+    let err = e;
+    if (S.order.size && !S._ordOff){ S._ordOff = true; S._kk = null; try { VIEW(); err = null; if (S.canEdit) toast(t("ordOffT")); } catch(e2){ console.error("[shajara] retry without saved order failed:", e2); err = e2; } }
+    if (err){ const st = $("state"); st.hidden = false; st.innerHTML = `<div class="box"><p>${esc(t("viewErr"))}</p><small style="opacity:.75;word-break:break-word">${esc(String(err && err.message || err))}</small></div>`; }
+  }
   if (!plain){
     const key = S.view + ":" + (S.view === "tree" ? S.rootId + (S._ctr ? ":" + S._ctr.h + "+" + S._ctr.w : "") + (S.paged ? ":p" + S.page : "") : S.focusId);
     if (fit || S.fittedFor !== key){ S.fittedFor = key; requestAnimationFrame(() => PZ.fit()); stageEnter(); }
@@ -3016,7 +3028,7 @@ Theme.init(); renderChrome(); FX.start();
     renderChrome();
   }, () => {});
   db.collection("order").onSnapshot(snap => {
-    S.order = new Map(snap.docs.map(d => [d.id, (d.data() || {}).ids]).filter(([, ids]) => Array.isArray(ids) && ids.length)); S._kk = null;
+    S.order = new Map(snap.docs.map(d => [d.id, (d.data() || {}).ids]).filter(([, ids]) => Array.isArray(ids) && ids.length && ids.every(x => typeof x === "string"))); S._kk = null;
     if (S.loaded) render();
   }, () => {});
   db.collection("people").onSnapshot(snap => {

@@ -105,3 +105,34 @@ test("existing database without the new table: worker adds it, keeps every recor
   assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM photos").first()).n, 1, "photo intact");
   await s.mf.dispose();
 }));
+
+// Production incident after PR #2: the new sibling_order table sat in the worker's start-up step and in /api/data,
+// so any failure there took the whole site down (every API call 500, tree never loaded).
+// Here every statement touching sibling_order fails; the family tree must still load.
+test("a failing sibling_order table never takes the site down", withDir(async dir => {
+  const s = await boot(dir), real = await s.mf.getD1Database("DB");
+  const { onRequest } = await import("../src/api.js");
+  const realOf = new WeakMap();
+  const stmt = (sql, r) => { const bad = /sibling_order/.test(sql), boom = async () => { throw new Error("D1_ERROR: simulated"); };
+    const o = { bind: (...a) => stmt(sql, bad ? null : r.bind(...a)), first: bad ? boom : (...a) => r.first(...a), all: bad ? boom : () => r.all(), run: bad ? boom : () => r.run() };
+    realOf.set(o, bad ? null : r); return o; };
+  const DB = { prepare: sql => stmt(sql, real.prepare(sql)), batch: async l => { const rs = l.map(x => realOf.get(x)); if (rs.some(x => !x)) throw new Error("D1_ERROR: simulated"); return real.batch(rs); } };
+  const env = { DB, ADMIN_PASSWORD: PASSWORD };
+  const errors = [], orig = console.error; console.error = (...a) => errors.push(a.join(" "));
+  try {
+    const call = async (path, method = "GET", body, cookie) => {
+      const h = { "x-sj": "1" }; if (body) h["content-type"] = "application/json"; if (cookie) h.cookie = cookie;
+      const r = await onRequest({ request: new Request("http://x/api/" + path, { method, headers: h, body: body && JSON.stringify(body) }), env, params: { path: path.split("/") } });
+      return { status: r.status, data: await r.json(), cookie: r.headers.get("set-cookie") };
+    };
+    assert.equal((await call("me")).status, 200);
+    const data = await call("data");
+    assert.equal(data.status, 200, "family data still loads");
+    assert.equal(data.data.people.length, 40, "all seeded people present");
+    assert.deepEqual(data.data.order, {}, "falls back to birth-date order");
+    const cookie = (await call("login", "POST", { password: PASSWORD })).cookie.split(";")[0];
+    const put = await call("order/a~b", "PUT", { ids: ["a1", "a2"] }, cookie);
+    assert.equal(put.status, 503, "saving an order reports a clear error instead");
+    assert.ok(errors.some(e => /sibling_order/.test(e)), "failure is logged for Cloudflare Logs");
+  } finally { console.error = orig; await s.mf.dispose(); }
+}));

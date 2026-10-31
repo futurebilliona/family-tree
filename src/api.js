@@ -26,8 +26,6 @@ function init(env) {
       env.DB.prepare("CREATE TABLE IF NOT EXISTS people (id TEXT PRIMARY KEY, data TEXT NOT NULL, updated INTEGER NOT NULL)"),
       env.DB.prepare("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, data TEXT NOT NULL)"),
       env.DB.prepare("CREATE TABLE IF NOT EXISTS photos (id TEXT PRIMARY KEY, type TEXT NOT NULL, b64 TEXT NOT NULL, created INTEGER NOT NULL)"),
-      // manual left-to-right order of siblings (migrations/0001_sibling_order.sql) — additive, never touches people
-      env.DB.prepare("CREATE TABLE IF NOT EXISTS sibling_order (pkey TEXT PRIMARY KEY, ids TEXT NOT NULL, updated INTEGER NOT NULL)"),
     ]);
     const seeded = await env.DB.prepare("SELECT k FROM meta WHERE k = 'seeded'").first();
     if (!seeded) {
@@ -85,10 +83,24 @@ async function readBodyJson(req) {
   return v;
 }
 function b64FromBuf(buf) { let s = ""; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
+/* ---------- manual sibling order (optional feature) ----------
+   Kept out of the start-up path on purpose: if the sibling_order table cannot be created or read,
+   the family tree must still load (in birth-date order). Failures are logged for Cloudflare Logs. */
+let orderReady = null, orderFailedAt = 0;
+function ensureOrderTable(env) {
+  if (!orderReady && Date.now() - orderFailedAt > 60000) {
+    orderReady = env.DB.prepare("CREATE TABLE IF NOT EXISTS sibling_order (pkey TEXT PRIMARY KEY, ids TEXT NOT NULL, updated INTEGER NOT NULL)").run()
+      .then(() => true, e => { console.error("sibling_order: create failed:", e && e.message || e); orderReady = null; orderFailedAt = Date.now(); return false; });
+  }
+  return orderReady || Promise.resolve(false);
+}
 async function readOrder(env) {
-  const rows = (await env.DB.prepare("SELECT pkey, ids FROM sibling_order ORDER BY pkey").all()).results || [];
   const out = {};
-  for (const r of rows) { try { const ids = JSON.parse(r.ids); if (Array.isArray(ids)) out[r.pkey] = ids; } catch (e) {} }
+  try {
+    if (!(await ensureOrderTable(env))) return out;
+    const rows = (await env.DB.prepare("SELECT pkey, ids FROM sibling_order ORDER BY pkey").all()).results || [];
+    for (const r of rows) { try { const ids = JSON.parse(r.ids); if (validOrder(ids)) out[r.pkey] = ids; } catch (e) {} }
+  } catch (e) { console.error("sibling_order: read failed:", e && e.message || e); }
   return out;
 }
 function validOrder(ids) {
@@ -168,15 +180,16 @@ export async function onRequest(ctx) {
       }
     }
     // PUT /api/order/:pkey {ids:[...]}  ·  DELETE /api/order/:pkey (back to birth-date order)
-    if (seg[0] === "order" && seg.length === 2 && ORDER_RE.test(seg[1])) {
-      if (method === "DELETE") { await env.DB.prepare("DELETE FROM sibling_order WHERE pkey = ?").bind(seg[1]).run(); return json({ ok: true }); }
-      if (method === "PUT") {
-        const { ids } = await readBodyJson(req);
-        if (!validOrder(ids)) return fail(400, "Tartib noto'g'ri");
-        await env.DB.prepare("INSERT INTO sibling_order (pkey, ids, updated) VALUES (?1, ?2, ?3) ON CONFLICT(pkey) DO UPDATE SET ids = ?2, updated = ?3")
+    if (seg[0] === "order" && seg.length === 2 && ORDER_RE.test(seg[1]) && (method === "PUT" || method === "DELETE")) {
+      const ids = method === "PUT" ? (await readBodyJson(req)).ids : null;
+      if (method === "PUT" && !validOrder(ids)) return fail(400, "Tartib noto'g'ri");
+      try {
+        if (!(await ensureOrderTable(env))) throw new Error("sibling_order table unavailable");
+        if (method === "DELETE") await env.DB.prepare("DELETE FROM sibling_order WHERE pkey = ?").bind(seg[1]).run();
+        else await env.DB.prepare("INSERT INTO sibling_order (pkey, ids, updated) VALUES (?1, ?2, ?3) ON CONFLICT(pkey) DO UPDATE SET ids = ?2, updated = ?3")
           .bind(seg[1], JSON.stringify(ids), Date.now()).run();
-        return json({ ok: true });
-      }
+      } catch (e) { console.error("sibling_order: write failed:", e && e.message || e); return fail(503, "Tartibni hozir saqlab bo'lmadi"); }
+      return json({ ok: true });
     }
     // PUT /api/meta
     if (seg[0] === "meta" && method === "PUT" && seg.length === 1) {

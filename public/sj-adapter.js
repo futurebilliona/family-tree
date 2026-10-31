@@ -21,10 +21,12 @@
   async function refresh(force) {
     const r = await call("/api/data");
     st.admin = !!r.admin;
-    const order = r.order && typeof r.order === "object" ? r.order : {};
-    if (!force && r.rev === st.rev && JSON.stringify(r.meta) === JSON.stringify(st.meta) && JSON.stringify(order) === JSON.stringify(Object.fromEntries([...st.order].map(([k, v]) => [k, v.ids])))) return;
+    // order is optional: anything unexpected is ignored so people always load
+    const order = r.order && typeof r.order === "object" && !Array.isArray(r.order) ? r.order : {};
+    const ordJson = o => JSON.stringify(Object.keys(o).sort().map(k => [k, o[k]]));   // key order must not matter
+    if (!force && r.rev === st.rev && JSON.stringify(r.meta) === JSON.stringify(st.meta) && ordJson(order) === ordJson(Object.fromEntries([...st.order].map(([k, v]) => [k, v.ids])))) return;
     st.rev = r.rev; st.meta = r.meta || {};
-    st.order = new Map(Object.entries(order).map(([k, ids]) => [k, { ids }]));
+    st.order = new Map(Object.entries(order).filter(([, ids]) => Array.isArray(ids)).map(([k, ids]) => [k, { ids }]));
     st.people = new Map(r.people.map(p => { const { id, ...rest } = p; return [id, rest]; }));
     emit();
   }

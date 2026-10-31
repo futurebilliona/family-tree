@@ -125,3 +125,18 @@ test("combined father+mother tree follows the saved order; the bridge person sta
   assert.deepEqual([...x2].sort((a, b) => a - b), x2);
   assert.deepEqual(overlaps(L2.nodes), []); assert.deepEqual(brokenLines(L2), []);
 });
+
+test("malformed saved orders are ignored, never hide or duplicate anyone", () => {
+  const t = aunts();
+  for (const bad of [[t.B, t.B, t.A], [null, 5, t.C], ["ghost", "ghost"], [], [t.D, { x: 1 }, t.A]]) {
+    const pg = loadPage(t.people, { order: { [t.key]: bad } });
+    const ids = pg.kidsOf(t.gf).map(p => p.id);
+    assert.equal(ids.length, 4, JSON.stringify(bad)); assert.equal(new Set(ids).size, 4);
+    for (const p of pg.kidsOf(t.gf)) assert.ok(Number.isFinite(pg.kKey(p)), "finite sort key");
+    const L = pg.layoutTree(t.gf, TD);
+    assert.equal(L.nodes.length, t.people.length, "everyone drawn"); assert.deepEqual(overlaps(L.nodes), []);
+  }
+  // duplicates collapse to the first occurrence
+  const pg = loadPage(t.people, { order: { [t.key]: [t.C, t.C, t.A] } });
+  assert.deepEqual(pg.kidsOf(t.gf).map(p => p.id).slice(0, 2), [t.C, t.A]);
+});
