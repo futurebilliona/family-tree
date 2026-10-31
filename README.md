@@ -37,5 +37,6 @@ Masalan `qochqorovlar.uz` sotib olsangiz: Worker → **Domains → Add custom do
 - `python3 build.py` → `public/index.html` yasaydi (server adapteri va kirish tugmasini qo'shadi).
 - `public/sj-adapter.js` — sahifani `/api` ga ulaydi.
 - `src/worker.js` — kirish nuqtasi, `src/api.js` — API (D1), `src/blob.js` — suratlar, `wrangler.jsonc` — sozlama.
+- Daraxt ko'rinishi: «Ikki tomon» rejimi (`combLayout` — `src/shajara.html`) ota tomoni (chapda) va ona tomoni (o'ngda) ajdodlarini nikoh orqali bitta daraxtda ko'rsatadi; o'chirilsa — avvalgi bir oilali daraxt (`layoutTree`).
 - `lib/seed.js` — boshlang'ich ma'lumot (faqat baza bo'sh bo'lganda bir marta yoziladi).
 - Mahalliy sinov: `npm i && npm run dev` → http://localhost:8788 (parol: `sinov123`).
