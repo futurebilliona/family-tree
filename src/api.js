@@ -5,6 +5,9 @@
 import seed from "../lib/seed.js";
 
 const ID_RE = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
+// sibling_order key: "<fatherId|->~<motherId|->" — one row per parent pair
+const ORDER_RE = /^[A-Za-z0-9_\-.~:@+]{3,410}$/;
+const MAX_ORDER = 500;
 const MAX_DOC = 256 * 1024;
 const MAX_PHOTO = 3 * 1024 * 1024;
 const COOKIE = "sj_s";
@@ -23,6 +26,8 @@ function init(env) {
       env.DB.prepare("CREATE TABLE IF NOT EXISTS people (id TEXT PRIMARY KEY, data TEXT NOT NULL, updated INTEGER NOT NULL)"),
       env.DB.prepare("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, data TEXT NOT NULL)"),
       env.DB.prepare("CREATE TABLE IF NOT EXISTS photos (id TEXT PRIMARY KEY, type TEXT NOT NULL, b64 TEXT NOT NULL, created INTEGER NOT NULL)"),
+      // manual left-to-right order of siblings (migrations/0001_sibling_order.sql) — additive, never touches people
+      env.DB.prepare("CREATE TABLE IF NOT EXISTS sibling_order (pkey TEXT PRIMARY KEY, ids TEXT NOT NULL, updated INTEGER NOT NULL)"),
     ]);
     const seeded = await env.DB.prepare("SELECT k FROM meta WHERE k = 'seeded'").first();
     if (!seeded) {
@@ -80,6 +85,15 @@ async function readBodyJson(req) {
   return v;
 }
 function b64FromBuf(buf) { let s = ""; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
+async function readOrder(env) {
+  const rows = (await env.DB.prepare("SELECT pkey, ids FROM sibling_order ORDER BY pkey").all()).results || [];
+  const out = {};
+  for (const r of rows) { try { const ids = JSON.parse(r.ids); if (Array.isArray(ids)) out[r.pkey] = ids; } catch (e) {} }
+  return out;
+}
+function validOrder(ids) {
+  return Array.isArray(ids) && ids.length >= 1 && ids.length <= MAX_ORDER && ids.every(x => typeof x === "string" && ID_RE.test(x)) && new Set(ids).size === ids.length;
+}
 function randomId(n = 16) { return [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2, "0")).join(""); }
 
 export async function onRequest(ctx) {
@@ -117,7 +131,8 @@ export async function onRequest(ctx) {
       const people = rows.map(r => { rev = Math.max(rev, r.updated); const p = { id: r.id, ...JSON.parse(r.data) }; return admin ? p : forViewer(p); });
       const meta = m ? JSON.parse(m.data) : {};
       if (!admin) delete meta.meId;
-      return json({ people, meta, rev, admin });
+      const order = await readOrder(env);
+      return json({ people, meta, order, rev, admin });
     }
 
     // GET /api/backup — to'liq zaxira (GitHub Actions haftalik oladi). Authorization: Bearer <BACKUP_TOKEN>
@@ -129,7 +144,7 @@ export async function onRequest(ctx) {
       const m = await env.DB.prepare("SELECT data FROM meta WHERE k = 'info'").first();
       const ph = (await env.DB.prepare("SELECT id, type, b64 FROM photos ORDER BY id").all()).results || [];
       return json({ app: "shajara", version: 2, exportedAt: new Date().toISOString(), meta: m ? JSON.parse(m.data) : {},
-        people: rows.map(r => ({ id: r.id, ...JSON.parse(r.data) })), photos: ph });
+        people: rows.map(r => ({ id: r.id, ...JSON.parse(r.data) })), photos: ph, order: await readOrder(env) });
     }
 
     if (!mutating) return fail(404, "Not found");
@@ -149,6 +164,17 @@ export async function onRequest(ctx) {
         if (!cur) return fail(404, "Topilmadi");
         const merged = { ...JSON.parse(cur.data), ...body };
         await env.DB.prepare("UPDATE people SET data = ?, updated = ? WHERE id = ?").bind(JSON.stringify(merged), now, id).run();
+        return json({ ok: true });
+      }
+    }
+    // PUT /api/order/:pkey {ids:[...]}  ·  DELETE /api/order/:pkey (back to birth-date order)
+    if (seg[0] === "order" && seg.length === 2 && ORDER_RE.test(seg[1])) {
+      if (method === "DELETE") { await env.DB.prepare("DELETE FROM sibling_order WHERE pkey = ?").bind(seg[1]).run(); return json({ ok: true }); }
+      if (method === "PUT") {
+        const { ids } = await readBodyJson(req);
+        if (!validOrder(ids)) return fail(400, "Tartib noto'g'ri");
+        await env.DB.prepare("INSERT INTO sibling_order (pkey, ids, updated) VALUES (?1, ?2, ?3) ON CONFLICT(pkey) DO UPDATE SET ids = ?2, updated = ?3")
+          .bind(seg[1], JSON.stringify(ids), Date.now()).run();
         return json({ ok: true });
       }
     }

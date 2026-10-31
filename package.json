@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "python3 build.py",
-    "dev": "wrangler dev --var ADMIN_PASSWORD:sinov123"
+    "dev": "wrangler dev --var ADMIN_PASSWORD:sinov123",
+    "test": "node --test tests/*.test.mjs"
   },
   "devDependencies": {
     "wrangler": "4.45.0"
