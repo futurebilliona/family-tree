@@ -729,6 +729,20 @@ body{background:radial-gradient(900px 620px at 0% 0%,rgba(60,170,120,.28),transp
   .map{min-height:340px}.lv-h{font-size:24px}
   .pgrid{grid-template-columns:repeat(auto-fill,minmax(min(140px,100%),1fr))}
 }
+/* sibling reordering */
+.grip{position:absolute;z-index:4;width:26px;height:26px;padding:0;border-radius:50%;border:2px solid var(--gold);background:var(--card);color:var(--gold);display:grid;place-items:center;cursor:grab;touch-action:none;box-shadow:0 4px 10px -3px rgba(0,0,0,.4);transition:transform .2s var(--ease),background .2s,color .2s}
+.grip:hover,.grip:focus-visible{transform:scale(1.15);background:var(--gold);color:#fff}
+.grip.pin{opacity:.45}
+.drag-ghost{z-index:30;pointer-events:none;opacity:.92;cursor:grabbing;transform:rotate(-2deg) scale(1.04)!important;box-shadow:0 26px 44px -14px rgba(0,0,0,.5)!important;animation:none!important}
+.card.drag-src{opacity:.28}
+.drop-bar{position:absolute;z-index:29;width:6px;margin-left:-3px;border-radius:3px;background:var(--gold);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 28%,transparent);pointer-events:none;transition:left .2s var(--ease)}
+.stage.reordering .links{opacity:.15;transition:opacity .2s}
+.stage.reordering .qa,.stage.reordering .tog,.stage.reordering .upb,.stage.reordering .grip,.stage.reordering .gen{opacity:0;pointer-events:none}
+.stage.reordering .card{transition:translate .28s var(--ease),box-shadow .3s var(--ease),transform .3s var(--ease),opacity .45s,filter .45s}
+.stage.reflow .card{transition:translate .45s var(--ease),box-shadow .3s var(--ease),transform .3s var(--ease),opacity .45s,filter .45s}
+.stage.reflow .links,.stage.reflow .qa,.stage.reflow .tog,.stage.reflow .upb,.stage.reflow .grip{animation:sjFade .5s ease both}
+@keyframes sjFade{from{opacity:0}}
+.ordrow{align-items:center}.ordrow .ord-pos{min-width:46px;text-align:center}.ordrow .ord-mode{color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.stage.enter .card,.stage.enter .gen{animation:none!important;opacity:1!important}.stage.enter .links .ln{stroke-dasharray:none!important;stroke-dashoffset:0!important}.reveal{opacity:1!important;transform:none!important}}
 </style>
 
@@ -973,10 +987,10 @@ function avatar(p, cls = ""){ const g = p.gender === "f" ? "f" : "m", src = phot
 const bKey = p => { const b = parseDate(p?.birthDate); return b?.y ? b.y*10000 + (b.m||0)*100 + (b.d||0) : 99999999; };
 function kidsOf(id){
   const arr = []; for (const p of S.people.values()) if (p.fatherId === id || p.motherId === id) arr.push(p);
-  return arr.sort((a,b) => bKey(a) - bKey(b) || (a.createdAt||0) - (b.createdAt||0));
+  return arr.sort(kidSort);
 }
 const spousesOf = p => (p?.spouses||[]).map(P).filter(Boolean);
-function siblingsOf(p){ const set = new Map(); for (const par of [p.fatherId, p.motherId]) if (P(par)) for (const k of kidsOf(par)) if (k.id !== p.id) set.set(k.id, k); return [...set.values()].sort((a,b) => bKey(a) - bKey(b)); }
+function siblingsOf(p){ const set = new Map(); for (const par of [p.fatherId, p.motherId]) if (P(par)) for (const k of kidsOf(par)) if (k.id !== p.id) set.set(k.id, k); return [...set.values()].sort(kidSort); }
 function descCount(id, seen = new Set()){ if (seen.has(id)) return 0; seen.add(id); let n = 0; for (const k of kidsOf(id)) n += 1 + descCount(k.id, seen); return n; }
 function depth(id, seen = new Set()){ if (seen.has(id)) return 0; seen.add(id); let m = 0; for (const k of kidsOf(id)) m = Math.max(m, depth(k.id, seen)); return 1 + m; }
 function paternal(id){ let n = 0, p = P(id); const seen = new Set([id]); while (p && p.fatherId && P(p.fatherId) && !seen.has(p.fatherId) && n < 7){ seen.add(p.fatherId); p = P(p.fatherId); n++; } return n; }
@@ -1125,6 +1139,44 @@ function relOf(id){
   return S.relCache.get(id);
 }
 
+/* ================= Manual sibling order =================
+   Siblings with the same father and mother form one group (key "<fatherId|->~<motherId|->").
+   By default a group is ordered by birth date. An administrator can save a custom left-to-right
+   order (table sibling_order, collection "order"); nothing in the person records changes.
+   A customised group keeps its own set of birth keys and hands them out in the saved order, so
+   it still interleaves normally with half-siblings from other groups and the sort stays consistent. */
+S.order = new Map(); S._kk = null;
+const ordKey = p => (p.fatherId || "-") + "~" + (p.motherId || "-");
+const byBirth = (a, b) => bKey(a) - bKey(b) || (a.createdAt||0) - (b.createdAt||0);
+function sibGroup(k){ const arr = []; for (const q of S.people.values()) if ((q.fatherId || q.motherId) && ordKey(q) === k) arr.push(q); return arr.sort(byBirth); }
+// saved order first; a sibling added later goes right after the last saved sibling who is older
+// (no known birth date → at the end), so a saved arrangement is never shuffled by new records
+function orderedGroup(k, birth = sibGroup(k), ord = S.order.get(k)){
+  if (!ord || !ord.length) return birth;
+  const byId = new Map(birth.map(q => [q.id, q])), listed = ord.map(id => byId.get(id)).filter(Boolean), out = listed.slice();
+  for (const u of birth) if (!out.includes(u)){ let i = -1; out.forEach((x, j) => { if (byBirth(x, u) < 0) i = j; }); out.splice(i + 1, 0, u); }
+  return out;
+}
+function kKey(p){
+  if (!S._kk){
+    const kk = new Map();
+    for (const k of S.order.keys()){ const birth = sibGroup(k); if (birth.length < 2) continue; const keys = birth.map(bKey); orderedGroup(k, birth).forEach((q, i) => kk.set(q.id, keys[i] + i / 1000)); }
+    S._kk = kk;
+  }
+  return S._kk.has(p.id) ? S._kk.get(p.id) : bKey(p);
+}
+const kidSort = (a, b) => kKey(a) - kKey(b) || (a.createdAt||0) - (b.createdAt||0);
+// new order for group k: the ids in `seq` take, in that order, the slots they occupy now; everyone else stays put
+function reorderGroup(k, seq){ const cur = orderedGroup(k).map(q => q.id), set = new Set(seq); let i = 0; return cur.map(x => set.has(x) ? seq[i++] : x); }
+async function saveOrder(k, ids){
+  const birth = sibGroup(k).map(q => q.id), prev = S.order.get(k);
+  const isBirth = ids.length === birth.length && ids.every((x, i) => x === birth[i]);
+  if (isBirth) S.order.delete(k); else S.order.set(k, ids);
+  S._kk = null;
+  try { const d = S.db.doc("order/" + k); if (isBirth) await d.delete(); else await d.set({ ids }); return true; }
+  catch(e){ if (prev) S.order.set(k, prev); else S.order.delete(k); S._kk = null; toast(t("errSave")); render(); return false; }
+}
+
 /* ================= Tree layout (shared by screen and poster) ================= */
 function layoutTree(rootId, o){
   const seen = new Set(), nodes = [], marriages = [], families = [];
@@ -1144,7 +1196,7 @@ function layoutTree(rootId, o){
       if (sid){
         const m = new Map(); kidsP.filter(k => other(k, id) === sid).forEach(k => m.set(k.id, k));
         kidsOf(sid).forEach(k => { const oo = other(k, sid); if (!oo || !P(oo)) m.set(k.id, k); });
-        ks = [...m.values()].sort((a,b) => bKey(a) - bKey(b));
+        ks = [...m.values()].sort(kidSort);
       } else ks = kidsP.filter(k => { const oo = other(k, id); return !oo || !spSet.has(oo); });
       const children = [];
       for (const k of ks) if (!seen.has(k.id)){ total++; if (!stop) children.push(build(k.id, dep + 1)); }
@@ -1272,7 +1324,7 @@ function combLayout(c, o){
       if (sid){
         const m = new Map(); kidsP.filter(k => other(k, id) === sid).forEach(k => m.set(k.id, k));
         kidsOf(sid).forEach(k => { const oo = other(k, sid); if (!oo || !P(oo)) m.set(k.id, k); });
-        ks = [...m.values()].sort((a,b) => bKey(a) - bKey(b));
+        ks = [...m.values()].sort(kidSort);
       } else ks = kidsP.filter(k => { const oo = other(k, id); if (oo && oo === excl) return false; if (excl === "-" && (!oo || !P(oo))) return false; return !oo || !spSet.has(oo); });
       const children = [];
       for (const k of ks) if (!seen.has(k.id)){ total++; if (!stop) children.push(build(k.id, row + 1, { maxRow })); }
@@ -1309,8 +1361,9 @@ function combLayout(c, o){
     let x = 0; B.ctrs = []; B.ids = [];
     for (const k of ks){
       if (k.id !== edgeId && seen.has(k.id)) continue;
-      const tn = build(k.id, row, k.id === edgeId ? edgeOpt : { maxRow });
+      const tn = build(k.id, row, k.id === edgeId ? edgeOpt : { maxRow }), n0 = B.nodes.length;
       B.ctrs.push(place(tn, x, B)); B.ids.push(k.id); x += tn.w + o.gap;
+      if (k.id === edgeId){ const pn = B.nodes.slice(n0).find(n => n.id === edgeId); if (pn) pn.pin = true; }
     }
     B.w = Math.max(0, x - o.gap); return B;
   }
@@ -1382,7 +1435,7 @@ function combLayout(c, o){
   const minX = Math.min(...B.nodes.map(n => n.x)), maxX = Math.max(...B.nodes.map(n => n.x + cw));
   const top = B.top, rh = o.h + o.rowGap, Y = r => (r - top) * rh;
   return {
-    nodes: B.nodes.map(n => ({ id:n.id, x:n.x - minX, y:Y(n.row), inLaw:n.inLaw, depth:n.row - top, total:n.total, folded:n.folded, cut:n.cut, ctr:n.id === c.h || n.id === c.w })),
+    nodes: B.nodes.map(n => ({ id:n.id, x:n.x - minX, y:Y(n.row), inLaw:n.inLaw, depth:n.row - top, total:n.total, folded:n.folded, cut:n.cut, pin:!!n.pin, ctr:n.id === c.h || n.id === c.w })),
     marriages: B.mar.map(m => ({ x1:m.x1 - minX, x2:m.x2 - minX, y:Y(m.row) + o.knotY, kx:m.kx - minX })),
     families: B.fam.map(f => ({ ax:f.ax - minX, ay:Y(f.row) + (f.knot ? o.knotY : o.h), busY:Y(f.row) + o.h + o.rowGap * 0.5 + f.off, kids:f.kids.map(k => ({ x:k.x - minX, y:Y(k.row) })), pid:f.pid, sid:f.sid, kidIds:f.kidIds })),
     W: maxX - minX, H: (B.bot - top + 1) * o.h + (B.bot - top) * o.rowGap, maxDepth: B.bot - top, ctrX: B.kx - minX, allRows
@@ -1458,7 +1511,7 @@ S.expanded = new Set(); S.couple = null; S.comb = store.get("shajara.comb") !== 
 Object.assign(L, { combOn:"Ikki tomon", combHint:"Ota va ona tomonini bitta daraxtda ko'rsatish", bothOf:"{a} va {b} oilasi", bothSub:"Ota tomoni va ona tomoni birga",
   tgUpComb:"Ota-onasi tomonini shu daraxtga qo'shish", tgCut:"Shoxni ochish (shu yerda ko'rsatish)" });
 const TD = { w:166, h:196, coupleGap:62, gap:40, rowGap:100, knotY:62, busStep:10 };
-function unitKids(id){ const p = P(id), m = new Map(); if (!p) return []; for (const x of [p, ...spousesOf(p)]) for (const k of kidsOf(x.id)) m.set(k.id, k); return [...m.values()].sort((a,b) => bKey(a) - bKey(b)); }
+function unitKids(id){ const p = P(id), m = new Map(); if (!p) return []; for (const x of [p, ...spousesOf(p)]) for (const k of kidsOf(x.id)) m.set(k.id, k); return [...m.values()].sort(kidSort); }
 function treePages(){
   if (!P(S.rootId)) return [];
   const c = S._ctr;
@@ -1544,6 +1597,8 @@ function renderTree(){
     $("pgPrev").disabled = S.page === 0; $("pgNext").disabled = S.page === pages.length - 1;
   }
   $("pager").hidden = !S.paged || S.view !== "tree";
+  // the whole layout as a function, so a drag can preview a tentative order with the same code
+  const lay = () => {
   const Lc = comb ? combLayout(ctr, TD) : null;
   const parts = []; let xoff = 0, maxD = 0;
   if (!Lc) for (const r of roots){ const L1 = layoutTree(r, { ...TD, dep0: depth0 }); parts.push({ L1, dx: xoff }); xoff += L1.W + TD.gap * 3; maxD = Math.max(maxD, L1.maxDepth); }
@@ -1553,6 +1608,9 @@ function renderTree(){
     L1.families.forEach(f => Lt.families.push({ ...f, ax: f.ax + dx, kids: f.kids.map(k => ({ ...k, x: k.x + dx })) }));
     L1.marriages.forEach(m => Lt.marriages.push({ ...m, x1: m.x1 + dx, x2: m.x2 + dx, kx: m.kx + dx }));
   }
+  return { Lt, Lc };
+  };
+  const { Lt, Lc } = lay(); S._lay = () => lay().Lt; S._Lt = Lt;
   const padL = 60, pad = 76, W = Lt.W + padL + pad, H = Lt.H + pad * 2 + (S.paged ? 60 : 0);
   let svg = `<svg class="links" width="${W}" height="${H}" viewBox="${-padL} ${-pad} ${W} ${H}">`;
   for (const f of Lt.families) svg += `<path class="ln" d="${linkPath(f, 16)}"/>`;
@@ -1578,12 +1636,17 @@ function renderTree(){
       ${avatar(p)}<span class="nm">${esc(first(p))}</span>${p.lastName ? `<span class="sn">${esc(dn(p.lastName))}</span>` : ""}<span class="yr">${yrs(p) ? "(" + esc(yrs(p)) + ")" : "&nbsp;"}</span></button>`;
     cards += QA(p, n.x + padL + TD.w - 10, n.y + pad + 34);
   }
+  // drag handles: administrators only, on everyone who has a full sibling next to them in this view
+  const sibN = new Map();
+  if (S.canEdit) for (const n of Lt.nodes){ const q = P(n.id); if (n.inLaw || !(q.fatherId || q.motherId)) continue; const k = ordKey(q) + "@" + n.y; sibN.set(k, (sibN.get(k) || 0) + 1); }
   for (const n of Lt.nodes){
     const cx = n.x + padL + TD.w / 2, p = P(n.id);
+    if (S.canEdit && !n.inLaw && (p.fatherId || p.motherId) && sibN.get(ordKey(p) + "@" + n.y) > 1) cards += `<button class="grip${n.pin ? " pin" : ""}" data-grip="${esc(n.id)}" style="left:${n.x + padL - 12}px;top:${n.y + pad + TD.h - 30}px" aria-label="${esc(t("ordGrip", { n:first(p) }))}" title="${esc(t(n.pin ? "ordPinned" : "ordGripT"))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>`;
     const tk = n.cut ? "tgCut" : n.folded ? "tgOpen" : "tgFold", uk = Lc ? "tgUpComb" : "tgUp";
     if (!n.inLaw && n.total > 0) cards += `<button class="tog${n.folded ? " fold" : ""}" data-tog="${esc(n.id)}"${n.cut ? ' data-cut="1"' : ""} style="left:${cx}px;top:${n.y + pad + TD.h}px" aria-label="${esc(t(tk))}" title="${esc(t(tk))}">${n.folded ? "+" + descCount(n.id) : "−"}</button>`;
     if (n.inLaw && (P(p.fatherId) || P(p.motherId))) cards += `<button class="upb" data-up="${esc(n.id)}" style="left:${n.x + padL + TD.w - 14}px;top:${n.y + pad - 10}px" aria-label="${esc(t(uk))}" title="${esc(t(uk))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>`;
   }
+  S._pad = { padL, pad };
   PZ.st.style.width = W + "px"; PZ.st.style.height = H + "px";
   PZ.st.classList.toggle("focus", !!hl);
   PZ.st.innerHTML = svg + gens + cards;
@@ -1591,6 +1654,106 @@ function renderTree(){
   if (gs){ gs.innerHTML = `<option value="0">${esc(t("genAll"))}</option>` + Array.from({ length: totalG }, (_, i) => `<option value="${i + 1}"${S.maxGen === i + 1 ? " selected" : ""}>${i + 1} ${esc(t("gen"))}</option>`).join(""); if (!S.maxGen) gs.value = "0"; }
   MINI.build(Lt, W, H, padL, pad);
 }
+
+/* ================= Reordering siblings (drag & drop, arrows) ================= */
+Object.assign(L, { ordGrip:"{n}: surib tartibni o'zgartirish", ordGripT:"Surib aka-uka / opa-singillar orasidagi o'rnini o'zgartiring (← → tugmalari ham ishlaydi)",
+  ordPinned:"Ikki tomon ko'rinishida bu inson markazga yaqin turadi; saqlangan o'rni oddiy daraxtda ko'rinadi", ordT:"Tartib",
+  ordL:"Chapga surish", ordR:"O'ngga surish", ordReset:"Tug'ilgan sana bo'yicha", ordResetT:"Tug'ilgan sana bo'yicha tartibga qaytarish", ordSaved:"Tartib saqlandi",
+  ordCustom:"qo'lda tartiblangan", ordBirth:"tug'ilgan sana bo'yicha" });
+const pinnedIds = () => new Set(S.view === "tree" && S._Lt ? S._Lt.nodes.filter(n => n.pin).map(n => n.id) : []);
+// re-render and let every card slide from where it was drawn (pos: id -> [x, y] on screen before the change)
+function flip(fn, pos){
+  if (!pos){ pos = new Map(); PZ.st.querySelectorAll(".card[data-id]").forEach(e => pos.set(e.dataset.id, [parseFloat(e.style.left), parseFloat(e.style.top)])); }
+  fn();
+  if (reduceMotion() || S.view !== "tree") return;
+  const moved = [];
+  PZ.st.querySelectorAll(".card[data-id]").forEach(e => { const b = pos.get(e.dataset.id); if (!b) return;
+    const dx = b[0] - parseFloat(e.style.left), dy = b[1] - parseFloat(e.style.top);
+    if (Math.abs(dx) > .5 || Math.abs(dy) > .5){ e.style.transition = "none"; e.style.translate = `${dx}px ${dy}px`; moved.push(e); } });
+  PZ.st.classList.add("reflow"); void PZ.st.offsetWidth;
+  moved.forEach(e => { e.style.transition = ""; e.style.translate = ""; });
+  clearTimeout(flip.t); flip.t = setTimeout(() => PZ.st.classList.remove("reflow"), 700);
+}
+// put `id` among its full siblings so that the movable ones read `seq` from left to right
+async function applyOrder(id, seq, pos){
+  const k = ordKey(P(id)), ids = reorderGroup(k, seq);
+  const cur = orderedGroup(k).map(q => q.id); if (ids.every((x, i) => x === cur[i])){ if (pos) flip(() => render(), pos); return false; }
+  S.order.set(k, ids); S._kk = null;           // optimistic: show it at once, then persist
+  flip(() => render(), pos);
+  const ok = await saveOrder(k, ids);
+  if (ok){ S._kk = null; toast(t("ordSaved")); }
+  return ok;
+}
+function moveBy(id, step){
+  const p = P(id); if (!S.canEdit || !p || !(p.fatherId || p.motherId)) return;
+  const pins = pinnedIds(); if (pins.has(id)){ toast(t("ordPinned")); return; }
+  const mov = orderedGroup(ordKey(p)).map(q => q.id).filter(x => !pins.has(x)), i = mov.indexOf(id), j = i + step;
+  if (i < 0 || j < 0 || j >= mov.length) return;
+  mov.splice(i, 1); mov.splice(j, 0, id);
+  return applyOrder(id, mov);
+}
+// back to plain birth-date order for the whole group (pinned members included)
+async function resetOrder(id){ const p = P(id); if (!S.canEdit || !p) return; const k = ordKey(p); if (!S.order.has(k)) return;
+  S.order.delete(k); S._kk = null; flip(() => render());
+  if (await saveOrder(k, sibGroup(k).map(q => q.id))) toast(t("ordSaved")); }
+function startDrag(id, e0){
+  const Lt = S._Lt, me = Lt && Lt.nodes.find(n => n.id === id && !n.inLaw); if (!me || !S.canEdit) return;
+  const k = ordKey(P(id)), { padL } = S._pad, pins = pinnedIds();
+  const sibs = Lt.nodes.filter(n => !n.inLaw && n.y === me.y && P(n.id) && (P(n.id).fatherId || P(n.id).motherId) && ordKey(P(n.id)) === k).sort((a, b) => a.x - b.x);
+  const others = sibs.filter(n => n.id !== id);
+  if (!others.length) return;
+  if (pins.has(id)){ toast(t("ordPinned")); return; }
+  const card = PZ.st.querySelector(`.card[data-id="${CSS.escape(id)}"]`); if (!card) return;
+  const ghost = card.cloneNode(true); ghost.removeAttribute("data-id"); ghost.classList.add("drag-ghost"); ghost.setAttribute("aria-hidden", "true"); ghost.tabIndex = -1;
+  const bar = document.createElement("div"); bar.className = "drop-bar";
+  bar.style.top = (parseFloat(card.style.top) - 8) + "px"; bar.style.height = (TD.h + 16) + "px";
+  PZ.st.append(ghost, bar); PZ.st.classList.add("reordering"); card.classList.add("drag-src");
+  const pt = ev => { const r = PZ.st.getBoundingClientRect(); return { x:(ev.clientX - r.left) / PZ.k, y:(ev.clientY - r.top) / PZ.k }; };
+  const s0 = pt(e0), gx = parseFloat(card.style.left), gy = parseFloat(card.style.top);
+  const base = new Map(Lt.nodes.map(n => [n.id, [n.x, n.y]]));
+  let target = sibs.findIndex(n => n.id === id), shown = target, pos = null, done = false;
+  const seqFor = ti => { const l = others.map(n => n.id); l.splice(ti, 0, id); return l.filter(x => !pins.has(x)); };
+  function preview(ti){        // slide the other branches into the gap, using the real layout code
+    const save = S.order.get(k); S.order.set(k, reorderGroup(k, seqFor(ti))); S._kk = null;
+    let L2 = null; try { L2 = S._lay(); } finally { if (save) S.order.set(k, save); else S.order.delete(k); S._kk = null; }
+    const at = new Map(L2.nodes.map(n => [n.id, [n.x, n.y]]));
+    pos = new Map();
+    PZ.st.querySelectorAll(".card[data-id]").forEach(e => { const a = base.get(e.dataset.id), b = at.get(e.dataset.id); if (!a || !b) return;
+      e.style.translate = `${b[0] - a[0]}px ${b[1] - a[1]}px`; pos.set(e.dataset.id, [parseFloat(e.style.left) + b[0] - a[0], parseFloat(e.style.top) + b[1] - a[1]]); });
+    const mine = at.get(id); if (mine) bar.style.left = (mine[0] + padL + TD.w / 2) + "px";
+  }
+  bar.style.left = (me.x + padL + TD.w / 2) + "px";
+  function move(ev){
+    if (done) return; ev.preventDefault();
+    const vr = PZ.vp.getBoundingClientRect(), edge = 48;      // nudge the view when dragging near its edge
+    if (ev.clientX < vr.left + edge){ PZ.x += 14; PZ.apply(); } else if (ev.clientX > vr.right - edge){ PZ.x -= 14; PZ.apply(); }
+    const q = pt(ev), dx = q.x - s0.x, dy = q.y - s0.y;
+    ghost.style.left = gx + dx + "px"; ghost.style.top = gy + dy + "px";
+    const cx = me.x + TD.w / 2 + dx;
+    target = others.filter(n => n.x + TD.w / 2 < cx).length;
+    if (target !== shown){ shown = target; preview(target); }
+  }
+  function end(ev, cancel){
+    if (done) return; done = true;
+    window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", cc); window.removeEventListener("keydown", esc_, true);
+    ghost.remove(); bar.remove(); card.classList.remove("drag-src"); PZ.st.classList.remove("reordering");
+    const start = sibs.findIndex(n => n.id === id);
+    if (cancel || target === start || !pos){ PZ.st.querySelectorAll(".card[data-id]").forEach(e => e.style.translate = ""); return; }
+    applyOrder(id, seqFor(target), pos);
+  }
+  const up = ev => end(ev, false), cc = ev => end(ev, true), esc_ = ev => { if (ev.key === "Escape"){ ev.stopPropagation(); end(ev, true); } };
+  window.addEventListener("pointermove", move, { passive:false }); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", cc); window.addEventListener("keydown", esc_, true);
+  ghost.style.left = gx + "px"; ghost.style.top = gy + "px";
+}
+PZ.st.addEventListener("pointerdown", e => {
+  const g = e.target.closest(".grip"); if (!g) return;
+  e.stopPropagation(); e.preventDefault(); if (S.canEdit) startDrag(g.dataset.grip, e);
+});
+PZ.st.addEventListener("keydown", e => {
+  const g = e.target.closest && e.target.closest(".grip"); if (!g || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+  e.preventDefault(); e.stopPropagation(); const id = g.dataset.grip;
+  Promise.resolve(moveBy(id, e.key === "ArrowLeft" ? -1 : 1)).then(() => { const n = PZ.st.querySelector(`.grip[data-grip="${CSS.escape(id)}"]`); if (n) n.focus({ preventScroll:true }); });
+}, true);
 
 /* ================= Minimap ================= */
 const MINI = (() => {
@@ -2107,7 +2270,7 @@ function renderState(){
   if (S.canEdit) $("emptyAdd").onclick = () => openForm(null, {});
 }
 function render(fit){
-  S.relCache = null;
+  S.relCache = null; S._kk = null;
   document.querySelector(".app")?.setAttribute("data-view", S.view);
   renderChrome(); renderState();
   const plain = PLAIN.has(S.view), lst = $("list");
@@ -2193,6 +2356,7 @@ function renderSheet(){
       ${!mo ? `<button class="btn sm" data-rel="mother">+ ${esc(t("mother"))}</button>` : ""}
       <button class="btn sm" data-rel="spouse">+ ${esc(t("spouse"))}</button>
       <button class="btn sm" data-rel="child">+ ${esc(t("child"))}</button></div>
+      ${ordRow(p)}
       <div><button class="btn danger sm" id="del">${esc(t("del"))}</button></div>`
       : `<p class="note">${esc(t("readonly"))}</p>`}
   </div>`;
@@ -2211,12 +2375,29 @@ function renderSheet(){
   if (!S.canEdit) return;
   $("edit").onclick = () => openForm(p.id);
   sh.querySelectorAll("[data-rel]").forEach(b => b.onclick = () => addRelative(p.id, b.dataset.rel));
+  if ($("ordL")) $("ordL").onclick = () => moveBy(p.id, -1);
+  if ($("ordR")) $("ordR").onclick = () => moveBy(p.id, 1);
+  if ($("ordReset")) $("ordReset").onclick = () => resetOrder(p.id);
   const del = $("del");
   del.onclick = async () => {
     if (!del.classList.contains("armed")){ del.classList.add("armed"); del.textContent = t("delConfirm"); setTimeout(() => { if (del.isConnected){ del.classList.remove("armed"); del.textContent = t("del"); } }, 4000); return; }
     del.disabled = true;
     try { await removePerson(p.id); S.selId = null; toast(t("deleted")); render(); } catch(e){ toast(t("errSave")); del.disabled = false; }
   };
+}
+// position among full siblings, with ← → buttons (administrators; also the keyboard/phone way to reorder)
+function ordRow(p){
+  if (!(p.fatherId || p.motherId)) return "";
+  const k = ordKey(p), grp = orderedGroup(k); if (grp.length < 2) return "";
+  const pins = pinnedIds(), mov = grp.map(q => q.id).filter(x => !pins.has(x)), i = mov.indexOf(p.id), custom = S.order.has(k);
+  const ic = d => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+  return `<div class="addrow ordrow"><span class="lbl">${esc(t("ordT"))}</span>
+    <button class="btn sm" id="ordL" aria-label="${esc(t("ordL"))}" title="${esc(t("ordL"))}"${i <= 0 ? " disabled" : ""}>${ic("M15 5l-7 7 7 7")}</button>
+    <b class="ord-pos">${grp.findIndex(q => q.id === p.id) + 1} / ${grp.length}</b>
+    <button class="btn sm" id="ordR" aria-label="${esc(t("ordR"))}" title="${esc(t("ordR"))}"${i < 0 || i >= mov.length - 1 ? " disabled" : ""}>${ic("M9 5l7 7-7 7")}</button>
+    <small class="ord-mode">${esc(t(custom ? "ordCustom" : "ordBirth"))}</small>
+    ${custom ? `<button class="btn sm" id="ordReset" title="${esc(t("ordResetT"))}">${esc(t("ordReset"))}</button>` : ""}
+    ${pins.has(p.id) ? `<p class="note" style="flex-basis:100%;margin:4px 0 0">${esc(t("ordPinned"))}</p>` : ""}</div>`;
 }
 function centerId(id){ const e = PZ.st.querySelector(`[data-id="${CSS.escape(id)}"]`); if (e) PZ.centerOn(e); }
 function select(id, locateIt){
@@ -2705,7 +2886,7 @@ function openExport(tab = "poster"){
   $("calCsv").onclick = () => saveFile("shajara-google-calendar.csv", buildCsv());
   $("calIcs").onclick = () => saveFile("shajara-kalendar.zip", makeZip([{ name:"shajara.ics", data:buildIcs() }]));
   $("bkSave").onclick = () => {
-    const data = { app:"shajara", version:2, exportedAt:new Date().toISOString(), meta:S.meta, people:[...S.people.values()] };
+    const data = { app:"shajara", version:2, exportedAt:new Date().toISOString(), meta:S.meta, people:[...S.people.values()], order:Object.fromEntries(S.order) };
     saveFile(`shajara-zaxira-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(data, null, 2));
   };
   if ($("bkFile")) $("bkFile").onchange = async e => {
@@ -2722,6 +2903,7 @@ function openExport(tab = "poster"){
         for (const p of data.people){ const { id, ...rest } = p; await ref(id).set(rest); }
         if (Array.isArray(data.photos) && window.SJ) for (const ph of data.photos){ if (ph && /^[a-f0-9]{32}$/.test(ph.id)) await fetch("/api/photos/" + ph.id, { method:"PUT", headers:{ "x-sj":"1", "content-type":"application/json" }, body: JSON.stringify({ type:ph.type, b64:ph.b64 }) }); }
         if (data.meta && typeof data.meta === "object" && !Array.isArray(data.meta)) await S.db.doc("meta/info").set({ ...data.meta });
+        if (data.order && typeof data.order === "object" && !Array.isArray(data.order)) for (const [k, ids] of Object.entries(data.order)) if (/^[A-Za-z0-9_\-.~:@+]{3,410}$/.test(k) && Array.isArray(ids) && ids.length && ids.every(x => typeof x === "string")) await S.db.doc("order/" + k).set({ ids });
         msg.innerHTML = `<p class="note">${esc(t("bkDone", { n:data.people.length }))}</p>`;
       } catch(x){ msg.innerHTML = `<p class="err">${esc(t("errSave"))}</p>`; }
     };
@@ -2884,6 +3066,10 @@ Theme.init(); renderChrome(); FX.start();
     S.meta = snap.exists ? { ...snap.data() } : {};
     if (!S.meId && S.isOwner && S.meta.meId){ S.meId = S.meta.meId; if (S.loaded) render(); }
     renderChrome();
+  }, () => {});
+  db.collection("order").onSnapshot(snap => {
+    S.order = new Map(snap.docs.map(d => [d.id, (d.data() || {}).ids]).filter(([, ids]) => Array.isArray(ids) && ids.length)); S._kk = null;
+    if (S.loaded) render();
   }, () => {});
   db.collection("people").onSnapshot(snap => {
     S.people = new Map(snap.docs.map(d => [d.id, { id:d.id, ...d.data() }]));

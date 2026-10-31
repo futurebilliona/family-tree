@@ -1,6 +1,6 @@
 // Sahifa claude.ai uchun yozilgan `claude.use(...)` interfeysini shu sayt serveriga (Cloudflare API) ulaydi.
 (() => {
-  const st = { people: new Map(), meta: {}, rev: -1, admin: false, loaded: null, subs: { people: new Set(), meta: new Set() } };
+  const st = { people: new Map(), meta: {}, order: new Map(), rev: -1, admin: false, loaded: null, subs: { people: new Set(), meta: new Set(), order: new Set() } };
   const clone = v => v == null ? v : JSON.parse(JSON.stringify(v));
   async function call(url, opt = {}) {
     const headers = { "x-sj": "1", ...(opt.headers || {}) };
@@ -11,17 +11,20 @@
     return data;
   }
   const snapDoc = (id, d) => { const c = clone(d); return { id, exists: d != null, data: () => (c == null ? undefined : clone(c)), metadata: { fromCache: false, hasPendingWrites: false } }; };
+  const qsOf = m => { const docs = [...m].map(([id, d]) => snapDoc(id, d)); return { docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: { fromCache: false, hasPendingWrites: false } }; };
   function emit() {
-    const docs = [...st.people].map(([id, d]) => snapDoc(id, d));
-    const qs = { docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: { fromCache: false, hasPendingWrites: false } };
+    const qs = qsOf(st.people), qo = qsOf(st.order);
     st.subs.people.forEach(f => { try { f(qs); } catch (e) { console.error(e); } });
+    st.subs.order.forEach(f => { try { f(qo); } catch (e) { console.error(e); } });
     st.subs.meta.forEach(f => { try { f(snapDoc("info", st.meta)); } catch (e) { console.error(e); } });
   }
   async function refresh(force) {
     const r = await call("/api/data");
     st.admin = !!r.admin;
-    if (!force && r.rev === st.rev && JSON.stringify(r.meta) === JSON.stringify(st.meta)) return;
+    const order = r.order && typeof r.order === "object" ? r.order : {};
+    if (!force && r.rev === st.rev && JSON.stringify(r.meta) === JSON.stringify(st.meta) && JSON.stringify(order) === JSON.stringify(Object.fromEntries([...st.order].map(([k, v]) => [k, v.ids])))) return;
     st.rev = r.rev; st.meta = r.meta || {};
+    st.order = new Map(Object.entries(order).map(([k, ids]) => [k, { ids }]));
     st.people = new Map(r.people.map(p => { const { id, ...rest } = p; return [id, rest]; }));
     emit();
   }
@@ -34,9 +37,10 @@
     const parts = path.split("/"), coll = parts[0], id = parts[1];
     const ref = {
       id, path,
-      async get() { await load(); return snapDoc(id, coll === "people" ? st.people.get(id) : st.meta); },
+      async get() { await load(); return snapDoc(id, coll === "people" ? st.people.get(id) : coll === "order" ? st.order.get(id) : st.meta); },
       async set(data) {
-        if (coll === "people") { await call("/api/people/" + encodeURIComponent(id), { method: "PUT", json: data }); st.people.set(id, clone(data)); }
+        if (coll === "order") { await call("/api/order/" + encodeURIComponent(id), { method: "PUT", json: { ids: data.ids } }); st.order.set(id, { ids: clone(data.ids) }); }
+        else if (coll === "people") { await call("/api/people/" + encodeURIComponent(id), { method: "PUT", json: data }); st.people.set(id, clone(data)); }
         else { await call("/api/meta", { method: "PUT", json: data }); st.meta = clone(data); }
         emit();
       },
@@ -45,7 +49,9 @@
         await call("/api/people/" + encodeURIComponent(id), { method: "PATCH", json: data });
         st.people.set(id, { ...(st.people.get(id) || {}), ...clone(data) }); emit();
       },
-      async delete() { if (coll === "people") { await call("/api/people/" + encodeURIComponent(id), { method: "DELETE" }); st.people.delete(id); emit(); } },
+      async delete() {
+        if (coll === "order") { await call("/api/order/" + encodeURIComponent(id), { method: "DELETE" }); st.order.delete(id); emit(); return; }
+        if (coll === "people") { await call("/api/people/" + encodeURIComponent(id), { method: "DELETE" }); st.people.delete(id); emit(); } },
       onSnapshot(next, error) {
         const f = s => next(s); st.subs.meta.add(f);
         load().then(() => next(snapDoc(id, st.meta))).catch(e => error && error({ code: "unavailable", message: e.message }));
@@ -63,10 +69,11 @@
         doc: id => docRef(c + "/" + (id || genId())),
         async add(d) { const r = docRef(c + "/" + genId()); await r.set(d); return r; },
         onSnapshot(next, error) {
-          st.subs.people.add(next);
-          load().then(() => { const docs = [...st.people].map(([id, d]) => snapDoc(id, d)); next({ docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: {} }); })
+          const set = c === "order" ? st.subs.order : st.subs.people;
+          set.add(next);
+          load().then(() => next(qsOf(c === "order" ? st.order : st.people)))
             .catch(e => error && error({ code: "unavailable", message: e.message }));
-          return () => st.subs.people.delete(next);
+          return () => set.delete(next);
         }
       };
     }
