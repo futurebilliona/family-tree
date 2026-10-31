@@ -21,10 +21,12 @@
   async function refresh(force) {
     const r = await call("/api/data");
     st.admin = !!r.admin;
-    const order = r.order && typeof r.order === "object" ? r.order : {};
-    if (!force && r.rev === st.rev && JSON.stringify(r.meta) === JSON.stringify(st.meta) && JSON.stringify(order) === JSON.stringify(Object.fromEntries([...st.order].map(([k, v]) => [k, v.ids])))) return;
+    // order is optional: anything unexpected is ignored so people always load
+    const order = r.order && typeof r.order === "object" && !Array.isArray(r.order) ? r.order : {};
+    const ordJson = o => JSON.stringify(Object.keys(o).sort().map(k => [k, o[k]]));   // key order must not matter
+    if (!force && r.rev === st.rev && JSON.stringify(r.meta) === JSON.stringify(st.meta) && ordJson(order) === ordJson(Object.fromEntries([...st.order].map(([k, v]) => [k, v.ids])))) return;
     st.rev = r.rev; st.meta = r.meta || {};
-    st.order = new Map(Object.entries(order).map(([k, ids]) => [k, { ids }]));
+    st.order = new Map(Object.entries(order).filter(([, ids]) => Array.isArray(ids)).map(([k, ids]) => [k, { ids }]));
     st.people = new Map(r.people.map(p => { const { id, ...rest } = p; return [id, rest]; }));
     emit();
   }
@@ -36,8 +38,7 @@
   function docRef(path) {
     const parts = path.split("/"), coll = parts[0], id = parts[1];
     const ref = {
-      id, path,
-      async get() { await load(); return snapDoc(id, coll === "people" ? st.people.get(id) : coll === "order" ? st.order.get(id) : st.meta); },
+      id,
       async set(data) {
         if (coll === "order") { await call("/api/order/" + encodeURIComponent(id), { method: "PUT", json: { ids: data.ids } }); st.order.set(id, { ids: clone(data.ids) }); }
         else if (coll === "people") { await call("/api/people/" + encodeURIComponent(id), { method: "PUT", json: data }); st.people.set(id, clone(data)); }
@@ -56,8 +57,7 @@
         const f = s => next(s); st.subs.meta.add(f);
         load().then(() => next(snapDoc(id, st.meta))).catch(e => error && error({ code: "unavailable", message: e.message }));
         return () => st.subs.meta.delete(f);
-      },
-      collection() { throw new Error("not supported"); }
+      }
     };
     return ref;
   }
@@ -65,9 +65,7 @@
     doc: docRef,
     collection(c) {
       return {
-        path: c,
         doc: id => docRef(c + "/" + (id || genId())),
-        async add(d) { const r = docRef(c + "/" + genId()); await r.set(d); return r; },
         onSnapshot(next, error) {
           const set = c === "order" ? st.subs.order : st.subs.people;
           set.add(next);
@@ -80,15 +78,10 @@
   };
   let meP = null;
   const me = () => (meP = meP || call("/api/me").then(r => { st.admin = !!r.admin; st.configured = !!r.configured; return r; }).catch(() => ({ admin: false })));
-  const user = {
-    isOwner: async () => (await me()).admin, canEdit: async () => (await me()).admin,
-    can: async n => (await me()).admin, id: async () => null,
-    me: async () => ({ id: null, name: "", email: null, isOwner: st.admin, canEdit: st.admin })
-  };
+  const user = { isOwner: async () => (await me()).admin, canEdit: async () => (await me()).admin };
   const assets = {
     async upload(blob, opt = {}) { return call("/api/photos", { method: "POST", body: blob, headers: { "content-type": opt.type || blob.type || "image/jpeg" } }); },
-    async delete(ref) { const id = String(ref).replace(/^.*\//, ""); return call("/api/photos/" + id, { method: "DELETE" }); },
-    async list() { return { assets: [], usage: {} }; }
+    async delete(ref) { const id = String(ref).replace(/^.*\//, ""); return call("/api/photos/" + id, { method: "DELETE" }); }
   };
   const downloads = {
     async save({ filename, data }) {

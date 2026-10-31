@@ -55,7 +55,9 @@ src = rep(src, "function renderState(){", ";\nfunction renderState(){")
 src = rep(src, 'if (data.meta && typeof data.meta === "object" && !Array.isArray(data.meta)) await S.db.doc("meta/info")',
   'if (Array.isArray(data.photos) && window.SJ) for (const ph of data.photos){ if (ph && /^[a-f0-9]{32}$/.test(ph.id)) await fetch("/api/photos/" + ph.id, { method:"PUT", headers:{ "x-sj":"1", "content-type":"application/json" }, body: JSON.stringify({ type:ph.type, b64:ph.b64 }) }); }\n        if (data.meta && typeof data.meta === "object" && !Array.isArray(data.meta)) await S.db.doc("meta/info")')
 # adapter before the main script
-src = rep(src, "<script>\n/* ================= Script conversion", '<script src="/sj-adapter.js"></script>\n<script>\n/* ================= Script conversion')
+import hashlib
+ver = hashlib.sha1((root / "public" / "sj-adapter.js").read_bytes()).hexdigest()[:10]
+src = rep(src, "<script>\n/* ================= Script conversion", '<script src="/sj-adapter.js?v=' + ver + '"></script>\n<script>\n/* ================= Script conversion')
 
 head = '''<!doctype html>
 <html lang="uz">
